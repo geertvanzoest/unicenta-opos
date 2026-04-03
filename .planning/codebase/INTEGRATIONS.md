@@ -4,415 +4,216 @@
 
 ## APIs & External Services
 
-**Payment Processing:**
+**Legacy Web Services:**
+- Apache Axis 1.4 - SOAP/Web Services for external system integration
+  - SDK/Client: `axis`, `axis-jaxrpc`, `saaj-api`, `axis-wsdl4j`
+  - Purpose: Enterprise integration with external POS/ERP systems
 
-- PaymentSense - Chip & PIN card payment terminal
-  - SDK/Client: `com.unicenta.plugins.Application` (from `unicenta-plugins` 1.1 JAR)
-  - Implementation: `src/main/java/com/unicenta/pos/payment/PaymentGatewayPaymentSense.java`
-  - Flow: Amount sent via `Application.paymentSenseTransaction()`, polls `AppContext.getIsProcessing()` every second, timeout 180s
-  - Result data: transaction ID, auth code, card scheme name, payment method
-  - Config property: `payment.gateway=PaymentSense`
+**Openbravo Integration:**
+- Openbravo ERP connector (uk.co.pos_apps:openbravo 1.0-SNAPSHOT)
+  - SDK/Client: `openbravo` dependency
+  - Purpose: Potential integration with Openbravo ERP systems
+  - Files: `src/main/java/com/unicenta/pos/inventory/MaterialProdInfo.java` references OpenbravoPos
 
-- External Gateway - Generic external payment processing
-  - Implementation: `src/main/java/com/unicenta/pos/payment/PaymentGatewayExt.java`
-  - Config property: `payment.gateway=external` (default)
-  - Factory: `src/main/java/com/unicenta/pos/payment/PaymentGatewayFac.java`
-
-**Plugin/Metrics System:**
-
-- uniCenta Plugins - Commercial plugin framework
-  - Dependency: `com.unicenta:unicenta-plugins` 1.1
-  - Metrics reporting: `com.unicenta.plugins.metrics.Metrics` class
-  - Called on startup in `src/main/java/com/unicenta/pos/forms/StartPOS.java` (line 131-137) via background thread
-  - Sends device hostname + app version to uniCenta
-
-**Openbravo ERP:**
-
-- SOAP-based ERP integration for data synchronization
-  - Dependency: `uk.co.pos_apps:openbravo` 1.0-SNAPSHOT
-  - SOAP client: Apache Axis 1.4 (`axis:axis`, `axis-jaxrpc`, `axis-wsdl4j`)
-  - Transfer module: `src/main/java/com/unicenta/pos/transfer/Transfer.java`
-  - Config UI: `src/main/java/com/unicenta/pos/transfer/TransferPanel.java`
+**Plugins Architecture:**
+- uniCenta Plugin Framework (com.unicenta:unicenta-plugins 1.1)
+  - SDK/Client: `unicenta-plugins` dependency
+  - Purpose: Extensibility for custom integrations
+  - Entry points: `com.unicenta.plugins.Application`, `com.unicenta.plugins.metrics.Metrics`
 
 ## Data Storage
 
 **Databases:**
+- **MariaDB** (Primary)
+  - Connector: `mariadb-java-client` 2.7.0
+  - Connection: Configured via `db.URL`, `db.schema`, `db.options` properties
+  - User credentials: Encrypted password support (cipher key pattern: `cypherkey{user}`)
+  - Files: `src/main/java/com/unicenta/pos/forms/AppViewConnection.java`
 
-- MariaDB (primary/recommended)
-  - Driver: `org.mariadb.jdbc:mariadb-java-client` 2.7.0
-  - Session class: `src/main/java/com/unicenta/data/loader/SessionDBMariaDB.java`
-  - Schema creation: `src/main/resources/com/unicenta/pos/scripts/MySQL-create.sql`
-  - Upgrade scripts: `MySQL-upgrade-4.5.sql` through `MySQL-upgrade-4.5.4.sql`, `MySQL-upgrade_master.sql`, `MariaDB-upgrade_master.sql`
-  - Stored procedures: `MySQL-create-sp.sql`
-  - Foreign keys: `MySQL-FKeys.sql`, `MySQL-dropFKeys.sql`
-  - Connection URL pattern: `jdbc:mysql://host:port/` + schema + options
-  - Config: `db.URL`, `db.schema`, `db.options` (e.g., `?zeroDateTimeBehavior=convertToNull`)
+- **MySQL** (Legacy/Compatibility)
+  - Connector: `mysql-connector-java` 5.1.39
+  - Connection: Via standard JDBC connection strings
+  - Driver class: `com.mysql.jdbc.Driver`
 
-- MySQL
-  - Driver: `mysql:mysql-connector-java` 5.1.39
-  - Session class: `src/main/java/com/unicenta/data/loader/SessionDBMySQL.java`
-  - Shares schema scripts with MariaDB
+- **PostgreSQL**
+  - Connector: `postgresql` 9.4.1208
+  - Connection: Via standard JDBC connection strings
+  - Driver class: `org.postgresql.Driver`
 
-- PostgreSQL
-  - Driver: `org.postgresql:postgresql` 9.4.1208
-  - Session class: `src/main/java/com/unicenta/data/loader/SessionDBPostgreSQL.java`
-  - Schema creation: `src/main/resources/com/unicenta/pos/scripts/PostgreSQL-create.sql`
+- **Apache Derby** (Embedded option)
+  - Connector: `derby` 10.14.2.0
+  - Driver class: `org.apache.derby.jdbc.EmbeddedDriver`
+  - Use case: Standalone/desktop deployments
 
-- Apache Derby (embedded, default for fresh installs)
-  - Driver: `org.apache.derby:derby` 10.14.2.0
-  - Session class: `src/main/java/com/unicenta/data/loader/SessionDBDerby.java`
-  - Schema creation: `src/main/resources/com/unicenta/pos/scripts/Derby-create.sql`
-  - Default URL: `jdbc:derby:[user.home]/.unicenta/unicentaopos-database;create=true`
-
-- SQLite (experimental)
-  - Driver: `org.xerial:sqlite-jdbc` 3.7.2
-  - Session class: `src/main/java/com/unicenta/data/loader/SessionDBSQLite.java`
-  - Schema creation: `src/main/resources/com/unicenta/pos/scripts/SQLite-create.sql`
-  - Commented out in config UI (`JPanelConfigDatabase.java` line 61)
-
-- HSQLDB / Oracle
-  - Session classes exist: `SessionDBHSQLDB.java`, `SessionDBOracle.java`
-  - No JDBC drivers in `pom.xml` -- bring your own driver via `db.driverlib`
-
-**Database Access Pattern:**
-
-- Connection management: `src/main/java/com/unicenta/data/loader/Session.java`
-  - Direct JDBC via `DriverManager.getConnection()` -- no connection pooling
-  - Auto-reconnect on closed connection (outside transactions)
-  - Manual transaction management: `begin()`, `commit()`, `rollback()`
-  - Database dialect detection: reads `DatabaseProductName` from JDBC metadata, dispatches to `SessionDB*` implementation
-
-- Connection creation: `src/main/java/com/unicenta/pos/forms/AppViewConnection.java`
-  - Dynamic driver loading via `URLClassLoader` from `db.driverlib` path
-  - Password decryption: `AltEncrypter` with key `"cypherkey" + username`
-  - Multi-database support: `db.multi=true` shows database selection dialog
-  - Java Web Start detection for alternative class loading
-
-- SQL abstraction: `src/main/java/com/unicenta/data/loader/` package
-  - `PreparedSentence` - Parameterized queries with `SerializerRead`/`SerializerWrite`
-  - `StaticSentence` - Simple static queries
-  - `BatchSentence` / `BatchSentenceResource` - Multi-statement SQL execution from resource files
-  - `TableDefinition` - CRUD operations on tables
-  - `Transaction` - Transactional multi-operation wrapper
-
-- Data logic classes (business layer):
-  - `src/main/java/com/unicenta/pos/forms/DataLogicSales.java` (2827 lines) - Sales, products, tickets, categories
-  - `src/main/java/com/unicenta/pos/forms/DataLogicSystem.java` - Users, roles, resources, CSV imports, permissions
+- **SQLite** (Lightweight option)
+  - Connector: `sqlite-jdbc` 3.7.2
+  - Driver class: `org.sqlite.JDBC`
+  - Use case: Single-instance, file-based deployments
+  - Files: Detection logic in `src/main/java/com/unicenta/pos/config/JPanelConfigDatabase.java`
 
 **File Storage:**
-
 - Local filesystem only
-- Application data: `[user.home]/.unicenta/` directory
-- Log files: `[user.home]/.unicenta/unicenta-YYYY-MM-DD.log`
-- Config file: `[user.home]/unicentaopos.properties`
+- Database scripts stored in: `src/scripts/`
+- Configuration files stored in: `src/other/Configs/`
 
 **Caching:**
-
-- Berkeley DB Java Edition (`com.sleepycat:je` 5.0.73) available as dependency
-- No application-level caching layer detected in active use
+- Berkeley DB Java Edition (com.sleepycat:je 5.0.73)
+  - Purpose: Optional in-process key-value caching
+  - Status: Included but not widely used in current codebase
 
 ## Authentication & Identity
 
 **Auth Provider:**
+- Custom authentication implemented in uniCenta
+- No third-party OAuth/SSO integration detected
+- Password encryption: Custom cipher-based (`AltEncrypter` class)
+- Files: `src/main/java/com/unicenta/pos/util/AltEncrypter.java`
 
-- Custom database-backed authentication
-  - Password hashing: SHA-1 via `src/main/java/com/unicenta/pos/util/Hashcypher.java`
-  - Hash format: `sha1:[hex]`, `plain:[text]`, or `empty:` for no password
-  - Authentication method: `Hashcypher.authenticate(password, storedHash)`
-  - No salt used -- plain SHA-1 of UTF-8 password bytes
+## Hardware & Device Integration
 
-- iButton (1-Wire) authentication
-  - Library: `com.dalsemi.onewire:OneWireAPI` 0.1
-  - Implementation: `src/main/java/com/unicenta/pos/forms/JRootApp.java` (implements `DeviceMonitorEventListener`)
-  - Hardware monitor: `src/main/java/com/unicenta/pos/util/uOWWatch.java`
-  - Config property: `machine.iButton=true/false`, `machine.iButtonResponse=5` (poll interval)
-  - Purpose: Physical token-based user login via Dallas/Maxim iButton devices
+**Payment Devices:**
+- JavaPOS 2.0.10 (jpos) - Industry standard for POS devices
+  - Supported device classes: Card readers, payment terminals, cash drawers
+  - Files: `src/main/java/com/unicenta/pos/payment/`
 
-- Role-based access control
-  - Admin module: `src/main/java/com/unicenta/pos/admin/`
-  - Role templates: `src/main/resources/com/unicenta/pos/templates/Role.Administrator.xml`, `Role.Manager.xml`, `Role.Employee.xml`, `Role.Guest.xml`
-  - Permissions stored in database, loaded per user session
+**Serial Communication:**
+- RXTX 2.2 (rxtxcomm) - Serial port for legacy devices
+  - Purpose: Support for scales, magnetic card readers, other serial devices
 
-- RMI single-instance enforcement
-  - `src/main/java/com/unicenta/pos/instance/InstanceQuery.java`
-  - Checks RMI registry for `AppMessage` binding to prevent multiple POS instances
+**USB Devices:**
+- USB4Java 1.2.0 - USB device communication
+- USB API 1.0.2 - Standard USB interface
+- Purpose: Direct USB peripherals (scales, card readers, receipt printers)
 
-## Hardware Integrations
-
-**Receipt Printers:**
-
-- ESC/POS thermal printers (primary)
-  - Implementation: `src/main/java/com/unicenta/pos/printer/escpos/DevicePrinterESCPOS.java`
-  - Supported brands/protocols:
-    - Epson: `CodesEpson.java` + `UnicodeTranslatorInt.java`
-    - Star: `CodesStar.java` + `UnicodeTranslatorStar.java`
-    - TMU220: `CodesTMU220.java` + `UnicodeTranslatorInt.java`
-    - Ithaca: `CodesIthaca.java` + `UnicodeTranslatorInt.java`
-    - SurePOS (IBM): `CodesSurePOS.java` + `UnicodeTranslatorSurePOS.java`
-  - Connection methods:
-    - Serial port: `PrinterWritterRXTX.java` via RXTX library
-    - File/pipe: `PrinterWritterFile.java`
-    - Raw socket: `PrinterWritterRaw.java`
-  - Config property: `machine.printer=epson:COM1` or `machine.printer=star:rxtx:/dev/ttyUSB0`
-
-- System printer (Java Print Service)
-  - Implementation: `src/main/java/com/unicenta/pos/printer/printer/DevicePrinterPrinter.java`
-  - Paper sizes configurable: receipt (72mm x 200mm default), standard (A4 default)
-  - Config properties: `paper.receipt.*`, `paper.standard.*`, `machine.printername`
-  - Config property: `machine.printer=printer:(Default),receipt`
-
-- JavaPOS printers
-  - Implementation: `src/main/java/com/unicenta/pos/printer/javapos/DevicePrinterJavaPOS.java`
-  - Config property: `machine.printer=javapos:DeviceName`
-
-- Plain text printer
-  - Implementation: `src/main/java/com/unicenta/pos/printer/escpos/DevicePrinterPlain.java`
-  - Config property: `machine.printer=plain:COM1`
-
-- Screen printer (development/preview)
-  - Implementation: `src/main/java/com/unicenta/pos/printer/screen/DevicePrinterPanel.java`
-  - Config property: `machine.printer=screen` (default)
-
-- Up to 6 printers configurable: `machine.printer`, `machine.printer.2` through `machine.printer.6`
-
-**Customer Displays:**
-
-- ESC/POS serial displays: `DeviceDisplayESCPOS.java`, `DeviceDisplaySurePOS.java`, `DeviceDisplaySerial.java`
-- JavaPOS displays: `DeviceDisplayJavaPOS.java`
-- On-screen display: `DeviceDisplayPanel.java` (default), `DeviceDisplayWindow.java`
-- Config property: `machine.display=screen|window|epson|surepos|ld200|javapos`
-
-**Fiscal Printers:**
-
-- JavaPOS fiscal printer: `src/main/java/com/unicenta/pos/printer/javapos/DeviceFiscalPrinterJavaPOS.java`
-- Config property: `machine.fiscalprinter=javapos:DeviceName`
-
-**Weighing Scales:**
-
-- Module: `src/main/java/com/unicenta/pos/scale/`
-- Supported models:
-  - AcomPC100: `ScaleAcomPC100.java`
-  - Avery Berkel 6720: `ScaleAvery.java`
-  - Casio PD1: `ScaleCasioPD1.java`
-  - CAS PDII: `ScaleCASPDII.java`
-  - Samsung ESP: `ScaleSamsungEsp.java`
-  - MTIND221: `ScaleMTIND221.java`
-  - Dialog (generic serial): `ScaleComm.java`
-  - On-screen (dev): `ScaleDialog.java`
-  - Fake (test): `ScaleFake.java`
-- Factory: `src/main/java/com/unicenta/pos/scale/DeviceScale.java`
-- All serial scales use RXTX for port communication
-- Config property: `machine.scale=caspdii:COM3` or `machine.scale=screen`
-
-**Magnetic Card Readers:**
-
-- Module: `src/main/java/com/unicenta/pos/payment/`
-- Implementations:
-  - `MagCardReaderGeneric.java` - Standard card swipe readers
-  - `MagCardReaderIntelligent.java` - Readers with encryption
-- Factory: `MagCardReaderFac.java`
-- Config property: `payment.magcardreader`
-
-**Barcode Scanners:**
-
-- Module: `src/main/java/com/unicenta/pos/scanpal2/`
-- Scanner communication: `DeviceScannerComm.java` via RXTX serial
-- Factory: `DeviceScannerFactory.java`
-- Config property: `machine.scanner`
-
-**Serial/USB Communication Layer:**
-
-- RXTX 2.2 - Serial and parallel port communication
-  - Java wrapper: `org.bidib.jbidib.org.qbang.rxtx:rxtxcomm` 2.2
-  - Native libraries per platform:
-    - Linux: `src/other/Linux/x86_64-unknown-linux-gnu/librxtxSerial64.so`, `librxtxParallel64.so`
-    - Windows: `src/other/Windows/i368-mingw32/rxtxSerial.dll`, `rxtxSerial64.dll`, `rxtxParallel.dll`, `rxtxParallel64.dll`
-    - macOS: `src/other/Mac_OS_X/librxtxSerial.jnilib`, `librxtxSerial64.jnilib`
-  - Used by: printers (ESC/POS), scales, scanners, card readers
-
-- USB4Java 1.2.0 - Direct USB device access
-  - Example: `src/main/java/org/usb4java/examples/ListDevices.java`
-  - API: `javax.usb:usb-api` 1.0.2
-
-## File Format Handling
-
-**Report Templates:**
-
-- JasperReports (.jrxml) - 67 report templates in `src/main/resources/com/unicenta/reports/`
-  - Categories: sales, inventory, products, customers, suppliers, labels, vouchers, EPM (employee performance)
-  - Report engine: `src/main/java/com/unicenta/pos/reports/JPanelReport.java`
-  - Custom viewer: `src/main/java/com/unicenta/pos/util/JRViewer400.java`
-  - Custom AWT printer: `src/main/java/com/unicenta/pos/util/JRPrinterAWT300.java`
-  - Data source: `src/main/java/com/unicenta/pos/reports/JRDataSourceBasic.java`
-
-- BeanShell scripts (.bs) - 70 report query scripts in `src/main/resources/com/unicenta/reports/`
-  - Purpose: Define SQL queries and parameters for each report
-  - Engine: `src/main/java/com/unicenta/pos/scripting/ScriptEngineBeanshell.java`
-  - Factory: `src/main/java/com/unicenta/pos/scripting/ScriptFactory.java`
-
-- Report localization - Per-report `.properties` files with translations (de, fr, es, it, nl, hr, etc.)
-
-**Print Templates:**
-
-- XML ticket templates in `src/main/resources/com/unicenta/pos/templates/`
-  - `Printer.Ticket2.xml`, `Printer.TicketLine.xml`, `Printer.TicketClose.xml`, `Printer.CloseCash.xml`
-  - `Printer.ReprintTicket.xml`, `Printer.Product.xml`, `Printer.Start.xml`
-  - `Ticket.Line.xml`, `Ticket.Buttons.xml`, `Ticket.TicketLineTaxesIncluded.xml`
-  - `Cash.Close.xml`
-  - Parsed by: `src/main/java/com/unicenta/pos/printer/TicketParser.java`
-
-- Text templates:
-  - `payment.cash.txt` - Cash payment receipt
-  - `script.Keyboard.txt` - Keyboard layout definition
-  - `Menu.Root.txt` - Main menu definition
-
-**Data Import/Export:**
-
-- CSV import: `src/main/java/com/unicenta/pos/imports/`
-  - `JPanelCSVImport.java` - Products with barcode, name, prices, tax, category, supplier
-  - `CustomerCSVImport.java` - Customer records
-  - `StockQtyImport.java` - Stock quantity updates
-  - `JPanelCSVCleardb.java` - Database clearing before import
-  - Library: JavaCSV 2.0 (`com.csvreader.CsvReader`)
-
-- Excel export: Apache POI 3.10.1 (XLS format)
-
-- PDF output: JasperReports + iText 2.1.7 + FOP 2.1
+**1-Wire Devices:**
+- OneWireAPI 0.1 - 1-Wire protocol support
+- Purpose: Temperature sensors, barcode readers with 1-Wire interface
 
 **Barcode Generation:**
+- Barcode4j 2.1 - Barcode/QR code generation
+- Purpose: Product labels, receipt markings
+- Files: Referenced in POS printing/inventory modules
 
-- Library: Barcode4J 2.1
-- Implementation: `src/main/java/com/unicenta/pos/util/BarcodeImage.java`
-- Supported formats: Codabar, Code128, Code39, EAN-13, EAN-8, UPC-A, UPC-E, Interleaved 2of5, POSTNET
-- Ticket barcode rendering: `src/main/java/com/unicenta/pos/printer/ticket/PrintItemBarcode.java`
+## Reporting & Output
 
-**Database Scripts:**
+**PDF/Document Generation:**
+- JasperReports 6.4.0 + dependencies (fonts, dynamic jasper)
+  - Purpose: Receipt templates, sales reports, financial statements
+  - Template location: `src/main/resources/com/` (report definitions)
+  - Files: `src/main/java/com/unicenta/pos/` (report execution)
 
-- 21 SQL scripts in `src/main/resources/com/unicenta/pos/scripts/`
-- Per-database schema creation: `MySQL-create.sql`, `PostgreSQL-create.sql`, `Derby-create.sql`, `SQLite-create.sql`
-- MySQL/MariaDB upgrade chain: `MySQL-upgrade-4.5.sql` -> `4.5.1` -> `4.5.2` -> `4.5.3` -> `4.5.4`
-- Master upgrade scripts: `MySQL-upgrade_master.sql`, `MariaDB-upgrade_master.sql`
-- Utility: `MySQL-clearData.sql`, `MySQL-check-tables.sql`, `MySQL-normalise-tables.sql`
-- Transfer tables: `MySQL-create-transfer.sql`
-- Orders table: `MySQL-orders-table.sql`
+- Apache FOP 2.1 (XSL-FO processor)
+  - Purpose: Advanced report rendering from FOP templates
 
-**UI Resources:**
+- iText 2.1.7 - Direct PDF manipulation
+  - Purpose: Low-level PDF generation/modification
 
-- FXML: `src/main/resources/fxml/OrderPop.fxml` (JavaFX order popup)
-- CSS: `src/main/resources/styles/orderpop.css` (JavaFX styling)
-- Images: `src/main/resources/com/unicenta/images/` (application icons)
-- Bonus images: `src/other/Bonus/Images/` (sample product images by category: Food, Drink, Clothing, Currency)
+**Excel Export:**
+- Apache POI 3.10.1
+  - Purpose: Excel spreadsheet generation for data exports
 
-## Localization
-
-**Resource Bundles:**
-
-- 4 bundle families:
-  - `pos_messages` - POS UI strings
-  - `erp_messages` - ERP integration strings
-  - `beans_messages` - Bean/component strings
-  - `data_messages` - Data layer strings
-- Loaded by: `src/main/java/com/unicenta/beans/LocaleResources.java`
-- Registered in: `src/main/java/com/unicenta/pos/forms/AppLocal.java`
-
-- Languages supported: en_US, es, es_AR, es_MX, fr, de, it, pt, pt_BR, nl, hr, et, el, al_SQ, ar, da
+**Document Printing:**
+- Velocity 1.7 - Template engine
+  - Purpose: Dynamic document template processing
+  - Files: `src/main/java/com/unicenta/pos/scripting/ScriptEngineVelocity.java`
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-
-- No external error tracking service (Sentry, Bugsnag, etc.)
-- Errors logged via SLF4J/Logback to local files and console
+- Not detected - no Sentry/Rollbar integration
 
 **Logs:**
+- Logback 1.2.2 + SLF4J
+  - Configuration: `src/main/resources/logback.groovy` (Groovy DSL format)
+  - Logging pattern: Annotation-based with Lombok `@Slf4j`
+  - Files: `src/main/java/com/unicenta/pos/forms/StartPOS.java` uses `@Slf4j` annotation
 
-- Framework: Logback 1.2.2 via SLF4J
-- Lombok `@Slf4j` annotation for logger injection
-- File appender: `[user.home]/.unicenta/unicenta-YYYY-MM-DD.log`
-- Rolling: Time-based, 5 days retention
-- Console appender: stdout
+**Metrics:**
+- uniCenta Metrics plugin (com.unicenta.plugins.metrics.Metrics)
+  - Purpose: Application metrics collection
+  - Status: Plugin-based, customizable
 
 ## CI/CD & Deployment
 
 **Hosting:**
-
-- Desktop application -- deployed to client machines
-- No server-side hosting (except database server)
+- Standalone Java application (JAR)
+- No cloud-specific deployment detected
 
 **CI Pipeline:**
+- GitHub Actions (via `.github/` directory)
+- Maven-based build system
+- Build artifact: `target/unicentaopos.jar`
+- Artifact upload step configured
 
-- GitHub Actions
-  - `.github/workflows/ci.yml` - Build + test + coverage (Temurin JDK 11, Ubuntu)
-  - `.github/workflows/semgrep.yml` - SAST security scanning
-  - `.github/workflows/claude.yml` - Additional CI
-- Codecov for coverage reporting
-- CodeRabbit for automated PR review
-
-**Distribution:**
-
-- Maven FTP deployment to `ftp://repo.unicenta.org/` (via `wagon-ftp` 2.10)
-- Build artifact: `target/unicentaopos.jar` + `target/lib/` + platform natives + scripts
+**Deployment Package:**
+- Assembly includes:
+  - JAR executable with embedded manifest
+  - Bundled dependencies in `lib/` directory
+  - Platform-native libraries (Windows, Linux, macOS)
+  - Report templates in `target/reports/`
+  - Configuration files in `target/Configs/`
+  - Localization files in `target/locales/`
 
 ## Environment Configuration
 
-**Required properties (in `unicentaopos.properties`):**
+**Required Environment Variables:**
+- None explicitly required in code
+- Database configuration driven by properties file (not env vars)
 
-- `db.engine` - Database engine name
-- `db.URL` - JDBC connection URL base
-- `db.schema` - Database name/schema
-- `db.user` - Database username
-- `db.password` - Database password (plaintext or `crypt:` prefix for encrypted)
-- `db.driver` - JDBC driver class name
-- `db.driverlib` - Path to JDBC driver JAR file
+**Configuration File Locations:**
+- Application properties: `AppConfig.properties` (loaded via AppConfig class)
+- Database configuration: Multi-instance support with `db.*` and `db1.*` properties
+- Locale configuration: Language/country/variant settings
+- Look & Feel configuration: Swing UI theme selection
 
-**Optional properties:**
+**Configuration Format:**
+- Java properties files (key=value)
+- Database passwords can be encrypted with cipher key: `crypt:{encrypted_value}`
+- Decryption: `AltEncrypter` class with key pattern `cypherkey{username}`
 
-- `db.multi` - Enable secondary database (`true`/`false`)
-- `db1.URL`, `db1.schema`, `db1.user`, `db1.password` - Secondary database
-- `payment.gateway` - Payment processor (`external` or `PaymentSense`)
-- `payment.magcardreader` - Card reader type
-- `machine.printer` through `machine.printer.6` - Printer configurations
-- `machine.display` - Customer display
-- `machine.scale` - Weight scale
-- `machine.scanner` - Barcode scanner
-- `machine.iButton` - Enable iButton authentication
-- `machine.hostname` - Machine identifier
-
-**Secrets:**
-
-- Database password encrypted with `AltEncrypter` (`src/main/java/com/unicenta/pos/util/AltEncrypter.java`)
-- Key derivation: `"cypherkey" + username`
-- Stored in properties file with `crypt:` prefix
-- No external secret management
+**Secrets Location:**
+- `.env` file location: Not enforced (uses properties file)
+- Encrypted password storage in config properties
+- No external secrets management system detected
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-
-- None detected
+- Not detected - no webhook endpoints implemented
 
 **Outgoing:**
+- No outgoing webhook integrations detected
+- Web service integration available via Apache Axis (legacy SOAP)
 
-- Metrics POST on application startup (via `com.unicenta.plugins.Application.postMetrics()`)
-- PaymentSense transaction callbacks (via plugin framework)
+## Platform-Specific Integration
 
-## Network Protocols
+**Windows:**
+- Native libraries in: `src/other/Windows/`
+- Device driver support for Windows COM ports
 
-**FTP:**
+**Linux:**
+- Native libraries in: `src/other/Linux/`
+- Serial device support via `/dev/ttyX*`
 
-- Upload utility: `src/main/java/com/unicenta/pos/util/FtpUpload.java`
-- Uses `java.net.URLConnection` with `ftp://` protocol
-- Purpose: License/machine file upload
+**macOS:**
+- Native libraries in: `src/other/Mac_OS_X/`
+- Serial device support via `/dev/tty*`
 
-**RMI (Remote Method Invocation):**
+## Templating & Scripting
 
-- Single-instance check: `src/main/java/com/unicenta/pos/instance/InstanceQuery.java`
-- Registry lookup for `AppMessage` binding on localhost
+**Template Engine:**
+- Velocity 1.7 - Document and report template generation
+- Scripting support: BeanShell 2.0b4 embedded scripting engine
+- Files: `src/main/java/com/unicenta/pos/scripting/` (ScriptFactory, ScriptEngineVelocity, etc.)
 
-**SOAP/HTTP:**
+## Internationalization
 
-- Openbravo ERP integration via Apache Axis 1.4
-- JAXB 2.3.1 for XML binding
+**Locale Support:**
+- Configurable default locale (language, country, variant)
+- Message bundles for UI translation
+- Bundle locations: `src/main/resources/` with language-specific files
+  - Pattern: `{module}_messages_{language_code}.properties`
+  - Examples: `pos_messages_el.properties`, `beans_messages_de.properties`, `data_messages_es_AR.properties`
 
 ---
 

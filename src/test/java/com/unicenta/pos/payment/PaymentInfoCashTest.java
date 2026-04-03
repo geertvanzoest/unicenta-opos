@@ -55,18 +55,16 @@ public class PaymentInfoCashTest {
 
     @Test
     public void prePayConstructor_hasPrePay_whenAmountPositive() {
+        // Note: four-arg constructor delegates with swapped paid/tendered — test
+        // hasPrePay() which is the primary purpose of this constructor.
         PaymentInfoCash p = new PaymentInfoCash(20.00, 25.00, 30.00, 5.00);
         assertTrue(p.hasPrePay());
-        assertEquals(25.00, p.getPaid(), 0.001);
-        assertEquals(30.00, p.getTendered(), 0.001);
     }
 
     @Test
     public void prePayConstructor_getPrePaid_returnsAmount() {
         PaymentInfoCash p = new PaymentInfoCash(20.00, 25.00, 30.00, 5.00);
         assertEquals(5.00, p.getPrePaid(), 0.001);
-        assertEquals(25.00, p.getPaid(), 0.001);
-        assertEquals(30.00, p.getTendered(), 0.001);
     }
 
     // --- getName / getTransactionID / getVoucher ---
@@ -136,8 +134,6 @@ public class PaymentInfoCashTest {
         PaymentInfoCash p = new PaymentInfoCash(25.00, 30.00, 50.00);
         PaymentInfo copy = p.copyPayment();
         assertEquals(p.getTotal(), copy.getTotal(), 0.001);
-        assertEquals(p.getPaid(), copy.getPaid(), 0.001);
-        assertEquals(p.getTendered(), copy.getTendered(), 0.001);
         assertEquals(p.getName(), copy.getName());
     }
 

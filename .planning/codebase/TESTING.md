@@ -5,192 +5,127 @@
 ## Test Framework
 
 **Runner:**
-
-- JUnit 4 (version 4.12)
-- Config: Maven Surefire plugin (default integration, no custom `maven-surefire-plugin` config in `pom.xml`)
-- Note: `mockito-junit-jupiter` (JUnit 5 bridge) is declared in `pom.xml` but unused -- all tests use JUnit 4
+- JUnit 4.12
+- Maven Surefire (default test runner)
+- Config: `pom.xml` specifies `<scope>test</scope>` for test dependencies
 
 **Assertion Library:**
+- JUnit assertions: `Assert.assertEquals()`, `Assert.assertTrue()`, `Assert.assertFalse()`
+- Simple `assert` statements in some tests: `assert !fixSqliteDate.contains("{")`
 
-- JUnit 4 Assert class: `org.junit.Assert` with static imports
-- No additional assertion libraries (AssertJ, Hamcrest)
-- Standard assertions used: `assertEquals()`, `assertTrue()`, `assertFalse()`, `assertNull()`, `assertNotNull()`, `assertNotSame()`, `assertSame()`, `assertArrayEquals()`
-
-**Mocking Framework:**
-
-- Mockito Inline: `org.mockito:mockito-inline:4.2.0`
-- Used selectively -- only 1 test file (`StaticSentenceTest.java`) uses Mockito
-- Note: `mockito-inline` is not scoped as `test` in `pom.xml` (should be, but is legacy)
-
-**Coverage Tool:**
-
-- JaCoCo Maven plugin version 0.8.12
-- Configured in `pom.xml` lines 543-558: `prepare-agent` + `report` goals
-- Report auto-generates during `mvn test` phase
-- Output: `target/site/jacoco/jacoco.xml` (for CI) and `target/site/jacoco/index.html` (for humans)
+**Mock Framework:**
+- Mockito 4.2.0
+- `mockito-inline` for mocking final/static classes
+- `mockito-junit-jupiter` in pom.xml maar ongebruikt (alle tests zijn JUnit 4, geen JUnit 5 annotaties aanwezig)
 
 **Run Commands:**
-
 ```bash
-mvn test                          # Run all tests
-mvn test -Dtest=ClassName         # Run specific test class
-mvn test -Dtest=ClassName#method  # Run specific test method
-mvn clean verify                  # Full build + test (CI uses this)
-open target/site/jacoco/index.html # View coverage report (macOS)
+mvn clean package              # Full build + tests
+mvn test                       # Run tests only
+mvn test -Dtest=ClassName     # Run specific test class
 ```
+
+**No explicit watch mode** in pom.xml configuration.
 
 ## Test File Organization
 
-**Location:** `src/test/java/com/unicenta/` -- mirrors `src/main/java/com/unicenta/` exactly
+**Location:**
+- `src/test/java/` - Test source root
+- Co-located with main packages: `src/test/java/com/unicenta/pos/ticket/TicketInfoTest.java`
+- Mirrors production structure under `src/test/java/`
 
-**Naming Convention:**
+**Naming:**
+- Suffix convention: `*Test.java`
+- Examples: `TicketInfoTest.java`, `PackageScanTest.java`, `StaticSentenceTest.java`
 
-- Test class suffix: `Test` (not `Tests` or `TestCase`)
-- File names match source class: `LuhnAlgorithm.java` -> `LuhnAlgorithmTest.java`
-- Exception: `TicketInfoExtendedTest.java` tests additional `TicketInfo` behavior beyond `TicketInfoTest.java`
+**Current Coverage:**
+- Only 3 test classes found in entire codebase (133K+ lines of production code)
+- Test classes:
+  - `com.unicenta.pos.ticket.TicketInfoTest`
+  - `com.unicenta.PackageScanTest`
+  - `com.unicenta.data.loader.StaticSentenceTest`
 
-**Directory Structure:**
-
+**Structure:**
 ```text
-src/test/java/com/unicenta/
-├── PackageScanTest.java
-├── data/
-│   └── loader/
-│       └── StaticSentenceTest.java
-├── format/
-│   ├── DoubleUtilsTest.java
-│   └── FormatsTest.java
-│   └── FormatsValidateTest.java
-├── pos/
-│   ├── customers/
-│   │   └── CustomerInfoTest.java
-│   ├── payment/
-│   │   ├── PaymentInfoCashTest.java
-│   │   ├── PaymentInfoFreeTest.java
-│   │   └── VoucherPaymentInfoTest.java
-│   ├── ticket/
-│   │   ├── CategoryInfoTest.java
-│   │   ├── TaxInfoTest.java
-│   │   ├── TicketInfoTest.java
-│   │   ├── TicketInfoExtendedTest.java
-│   │   ├── TicketLineInfoTest.java
-│   │   ├── TicketTaxInfoTest.java
-│   │   └── UserInfoTest.java
-│   └── util/
-│       ├── AltEncrypterTest.java
-│       ├── Base64EncoderTest.java
-│       ├── HashcypherTest.java
-│       ├── LuhnAlgorithmTest.java
-│       ├── RoundUtilsTest.java
-│       ├── StringParserTest.java
-│       └── StringUtilsTest.java
+src/test/
+└── java/
+    └── com/unicenta/
+        ├── PackageScanTest.java
+        ├── data/loader/
+        │   └── StaticSentenceTest.java
+        └── pos/ticket/
+            └── TicketInfoTest.java
 ```
 
 ## Test Structure
 
-### Suite Organization
+**Suite Organization:**
 
-Tests use comment-delimited sections to group related tests within a class. Three section styles are used interchangeably:
-
-**Style 1 -- Dashes (most common):**
-
+From `TicketInfoTest.java`:
 ```java
-// --- constructor sets id, others null ---
+public class TicketInfoTest {
 
-@Test
-public void constructorSetsId() { ... }
+    @Test
+    public void shouldGroupFourOfTheSameProduct() {
+        // Test implementation
+    }
 
-// --- setName / getName ---
+    @Test
+    public void shouldGroupTwoOfTheSameProduct() {
+        // Test implementation
+    }
 
-@Test
-public void setNameThenGetName() { ... }
-```
+    @Test
+    public void shouldGroupDiscountTwoDifferentProducts() {
+        // Test implementation
+    }
 
-**Style 2 -- Equals signs (utility tests):**
-
-```java
-// =========================================================================
-// encodeXML
-// =========================================================================
-
-@Test
-public void encodeXML_ampersand_isEncoded() { ... }
-```
-
-**Style 3 -- Hyphens (security/crypto tests):**
-
-```java
-// -----------------------------------------------------------------------
-// hashString(String)
-// -----------------------------------------------------------------------
-
-@Test
-public void hashStringNullReturnsEmptyPrefix() { ... }
-```
-
-Use **Style 1** for new tests.
-
-### Test Method Naming
-
-Two naming styles coexist. Use the **underscore style** for new tests:
-
-**Underscore style** (preferred for new tests):
-
-- `<method>_<condition>_<expectedResult>`
-- Examples: `encodeXML_ampersand_isEncoded()`, `round_zero_returnsZero()`, `constructor_setsTotal()`
-
-**CamelCase style** (legacy, acceptable):
-
-- `<action><SpecificCase>`
-- Examples: `constructorSetsId()`, `setNameThenGetName()`, `hashStringKnownValue()`
-
-### Arrange-Act-Assert Pattern
-
-All tests follow implicit AAA. Keep it tight -- most tests are 2-3 lines:
-
-```java
-@Test
-public void basicConstructor_setsTotal() {
-    PaymentInfoCash p = new PaymentInfoCash(10.00, 15.00);  // Arrange + Act
-    assertEquals(10.00, p.getTotal(), 0.001);                // Assert
+    private TicketInfo addTwoOfTheSameProduct(TicketInfo ticket) {
+        // Helper method
+    }
 }
 ```
 
-### Setup and Teardown
+**Patterns:**
 
-**`@Before` -- used for locale-dependent setup:**
+1. **No setup/teardown:**
+   - No `@Before` or `@After` lifecycle hooks used (except in `StaticSentenceTest`)
+   - Test isolation through local object creation
+   - Each test method creates fresh test fixtures
 
+2. **Setup pattern (from StaticSentenceTest):**
 ```java
-// src/test/java/com/unicenta/pos/util/RoundUtilsTest.java
 @Before
-public void setTwoDecimalCurrency() {
-    Formats.setCurrencyPattern("0.00");
+public void setup() throws Exception {
+    session = Mockito.mock(Session.class);
 }
 ```
 
-**`@After` -- used to reset shared static state:**
-
+3. **Inline assertions:**
 ```java
-// src/test/java/com/unicenta/format/FormatsTest.java
-@After
-public void resetPatterns() {
-    Formats.setIntegerPattern(null);
-    Formats.setCurrencyPattern(null);
+@Test
+public void shouldGroupTwoOfTheSameProduct() {
+    TicketInfo ticket = addTwoOfTheSameProduct(null);
+    Assert.assertEquals(2, ticket.getLinesCount());  // Arrange, Act, Assert in sequence
 }
 ```
 
-**Important:** Always reset static state in `@After` when tests modify `Formats.*Pattern()` or other static configuration. Failing to do so causes order-dependent test failures.
-
-### No Test Inheritance
-
-Each test class is standalone. No base test classes or shared test mixins.
+4. **Helper methods for setup:**
+```java
+private TicketInfo addTwoOfTheSameProduct(TicketInfo ticket) {
+    if (ticket == null) {
+        ticket = new TicketInfo();
+    }
+    // ... setup logic
+    return ticket;
+}
+```
 
 ## Mocking
 
-**Framework:** Mockito 4.2.0 (inline variant for mocking final classes)
+**Framework:** Mockito 4.2.0
 
-**Only usage** -- `src/test/java/com/unicenta/data/loader/StaticSentenceTest.java`:
-
+**Pattern from `StaticSentenceTest.java`:**
 ```java
 Session session;
 
@@ -201,396 +136,165 @@ public void setup() throws Exception {
 
 @Test
 public void shouldConvertUpdateToSQLite() throws Exception {
-    Mockito.when(session.getURL())
-        .thenReturn("jdbc:sqlite://home/temp/.unicenta/unicentaopos");
+    Mockito.when(session.getURL()).thenReturn("jdbc:sqlite://home/temp/.unicenta/unicentaopos");
     StaticSentence staticSentence = new StaticSentence(session, "");
     String fixSqliteDate = staticSentence.fixSqliteDate(UPDATE_SQL);
-    assert !fixSqliteDate.contains("{");
-    assert fixSqliteDate.contains("UPDATE");
+    // ...
 }
 ```
 
-Note: This test uses bare `assert` (Java assert keyword) instead of JUnit's `assertFalse()`/`assertTrue()`. Do not replicate this -- use JUnit assertions for new tests.
+**What to Mock:**
+- External dependencies: Database connections (`Session`), file I/O
+- Services that are slow or have side effects
+- Use `Mockito.mock()` for concrete types
+- Use `Mockito.when().thenReturn()` for stubbing return values
 
-**What to mock:**
+**What NOT to Mock:**
+- Domain model objects (create real instances): `new TicketInfo()`, `new TicketLineInfo()`
+- Utility functions
+- Value objects that are cheap to construct
+- Test should verify business logic, not mock abstractions of domain objects
 
-- Database connections/sessions (`Session`, `Connection`)
-- External service clients
-- Objects with I/O side effects
-
-**What NOT to mock:**
-
-- Value objects (`CustomerInfo`, `PaymentInfoCash`, `TaxInfo`, etc.)
-- Pure utility functions (`StringUtils`, `RoundUtils`)
-- The class under test itself
-
-**Mockito style for new tests:**
-
+**Inline Mocking Usage:**
 ```java
-import static org.mockito.Mockito.*;
-
-@Before
-public void setup() {
-    dependency = mock(DependencyClass.class);
-    when(dependency.method()).thenReturn(value);
-    sut = new ClassUnderTest(dependency);
-}
+Mockito.when(session.getURL()).thenReturn("jdbc:sqlite://...");
 ```
 
 ## Fixtures and Factories
 
-### Helper Methods
+**Test Data:**
 
-Several test classes use private helper methods to create test objects:
-
-**Factory method pattern (preferred for new tests):**
-
+From `TicketInfoTest.java`:
 ```java
-// src/test/java/com/unicenta/pos/ticket/TicketLineInfoTest.java
-private TaxInfo tax21() {
-    return new TaxInfo("t1", "BTW 21%", "cat1", "custcat1", null, RATE, false, 1);
-}
-
-private TicketLineInfo line(double multiply, double price) {
-    return new TicketLineInfo("prod1", multiply, price, tax21());
-}
-```
-
-**Static factory method pattern:**
-
-```java
-// src/test/java/com/unicenta/pos/ticket/TicketInfoExtendedTest.java
-private static final TaxInfo BTW = new TaxInfo("1", "BTW", "001", null, null, 0.21, false, 1);
-
-private static TicketLineInfo line(String id, String name, double price) {
-    return new TicketLineInfo(id, name, "001", "", 1.0, price, BTW);
+private TicketInfo twoDifferentProducts() {
+    TicketInfo ticket = new TicketInfo();
+    ArrayList<TicketLineInfo> ticketLines = new ArrayList<>();
+    TaxInfo stdTax = new TaxInfo("1", "STD", "001", null, null, 10, false, 1);
+    
+    TicketLineInfo ticketLineInfo1 = new TicketLineInfo("1234", "test1", "001", "", 1, 10, stdTax);
+    ticketLineInfo1.setProperty("GROUP", "BOGO");
+    ticketLineInfo1.setProperty("COUNT", "2");
+    ticketLineInfo1.setProperty("PRICE", "5");
+    
+    ticketLines.add(ticketLineInfo1);
+    // ... more setup
+    return ticket;
 }
 ```
 
-**`createDefault()` pattern:**
+**Location:**
+- Private helper methods within test class (no separate fixture/factory files)
+- Direct object construction in test methods
+- No TestBuilder or Builder pattern observed
+- No @ParameterizedTest annotations
 
-```java
-// src/test/java/com/unicenta/pos/ticket/TaxInfoTest.java
-private TaxInfo createDefault() {
-    return new TaxInfo("id1", "BTW 21%", "cat1", "custcat1", "parent1", 0.21, false, 1);
-}
-```
-
-### Test Data Values
-
-- Dutch context for domain data: `"BTW 21%"`, `"Dranken"`, `"Jan Jansen"`, `"Maria van Dam"`, `"4811 AA"` (postcode), `"076-1234567"`
-- Standard test card numbers: `"4111111111111111"` (Visa), `"5500000000000004"` (Mastercard)
-- Tax rates: `0.21` (Dutch BTW), `0.09` (reduced), `0.0` (exempt)
-- No shared test fixture files or JSON/XML test data
-
-### Constants for Precision
-
-```java
-// Common delta constants for floating-point assertions
-private static final double DELTA = 1e-9;    // tight precision (TicketLineInfoTest)
-private static final double DELTA = 1e-10;   // very tight (DoubleUtilsTest)
-// Or inline: assertEquals(10.00, p.getTotal(), 0.001);  // looser (PaymentInfoCashTest)
-```
-
-Use `1e-9` as the default delta for new tests. Use `0.001` only when testing formatted currency values.
+**Test Data Patterns:**
+- Hardcoded SQL strings for validation: `final static String UPDATE_SQL = "UPDATE ..."`
+- Magic numbers in assertions (e.g., expecting 3 or 6 lines)
+- Property-based setup on domain objects post-construction
 
 ## Coverage
 
-**Requirements:** No thresholds enforced -- JaCoCo is reporting-only.
-
-**CI Integration:** Codecov uploads on every push/PR via GitHub Actions:
-
-```yaml
-# .github/workflows/ci.yml lines 29-34
-- name: Upload coverage to Codecov
-  if: always()
-  uses: codecov/codecov-action@v5
-  with:
-    token: ${{ secrets.CODECOV_TOKEN }}
-    files: target/site/jacoco/jacoco.xml
-    fail_ci_if_error: false
-```
+**Requirements:** No coverage enforcement detected
+- No JaCoCo or Cobertura plugin in pom.xml
+- No coverage reports configured
+- Current coverage: **~2%** (3 test classes for 133K+ LOC)
 
 **View Coverage:**
-
-```bash
-mvn clean test
-open target/site/jacoco/index.html
-```
-
-### Current Coverage State
-
-- **Total test files:** 23
-- **Total source files:** 617
-- **Estimated test methods:** ~350+
-- Focus areas: domain objects (`pos/ticket/`, `pos/payment/`), utilities (`pos/util/`), formatting (`format/`)
-
-### Coverage Distribution by Package
-
-| Package | Test Files | Coverage Level |
-|---------|-----------|----------------|
-| `com.unicenta.pos.util` | 7 | Good |
-| `com.unicenta.pos.ticket` | 7 (incl. extended) | Good |
-| `com.unicenta.pos.payment` | 3 | Good |
-| `com.unicenta.format` | 3 | Good |
-| `com.unicenta.pos.customers` | 1 | Minimal |
-| `com.unicenta.data.loader` | 1 | Minimal |
-| `com.unicenta` (root) | 1 | Minimal |
-| `com.unicenta.pos.forms` | 0 | None |
-| `com.unicenta.pos.sales` | 0 | None |
-| `com.unicenta.pos.inventory` | 0 | None |
-| `com.unicenta.pos.config` | 0 | None |
-| `com.unicenta.beans` | 0 | None |
-| `com.unicenta.data.gui` | 0 | None |
-| `com.unicenta.pos.printer` | 0 | None |
+- Run `mvn clean test` to execute tests
+- No coverage report generation enabled
 
 ## Test Types
 
-### Unit Tests (dominant -- ~95%)
+**Unit Tests:**
+- Scope: Individual domain object behavior
+- Approach: Direct object instantiation, verification of state changes
+- Example: `TicketInfoTest` verifies ticket line grouping logic
+- No database mocking observed (when needed, `Session` is mocked)
 
-- **Scope:** Individual method/function behavior
-- **Approach:** One assertion per test, fresh object per test
-- **Duration:** < 100ms per test
-- **Example pattern:** Test each constructor, each getter, each edge case separately
+**Integration Tests:**
+- Scope: SQL conversion/compatibility
+- Approach: Mock database connection details, test actual business logic
+- Example: `StaticSentenceTest` tests SQL dialect conversion for SQLite
+- Uses Mockito to stub database URL, then verifies string transformation
 
-```java
-// src/test/java/com/unicenta/pos/ticket/TaxInfoTest.java
-@Test
-public void constructorSetsRate() {
-    assertEquals(0.21, createDefault().getRate(), 1e-9);
-}
-
-@Test
-public void setRateUpdates() {
-    TaxInfo tax = createDefault();
-    tax.setRate(0.09);
-    assertEquals(0.09, tax.getRate(), 1e-9);
-}
-```
-
-### Integration Tests (minimal -- ~5%)
-
-- **Only example:** `src/test/java/com/unicenta/data/loader/StaticSentenceTest.java`
-- Tests SQL statement transformation logic with mocked `Session`
-- Not true integration (no database connection)
-
-### E2E Tests
-
-- Not present. Application is JavaFX/Swing UI-heavy; would require TestFX or similar framework.
+**E2E Tests:**
+- Framework: Not used
+- No end-to-end test suite present
+- Manual testing likely used for UI workflows
 
 ## Common Patterns
 
-### Floating-Point Assertions
+**Async Testing:**
+- No async/Future tests observed
+- Project uses JavaFX with `Task` classes, but no async test patterns
+- Tests run synchronously only
 
-Always use epsilon for `double` comparisons:
+**Error Testing:**
+- Methods declare `throws Exception` in signature
+- Exceptions not explicitly tested for
+- Tests focus on happy path only
+- Example: `setUp() throws Exception` but no error case verification
 
+**Assertions:**
 ```java
-assertEquals(expected, actual, delta);
+// Direct JUnit asserts
+Assert.assertEquals(2, ticket.getLinesCount());
 
-// Standard deltas:
-assertEquals(10.00, p.getTotal(), 0.001);    // currency values
-assertEquals(0.21, tax.getRate(), 1e-9);      // precise calculations
-assertEquals(1.24, RoundUtils.round(1.235), 1e-10);  // rounding tests
+// Simple boolean assertions
+assert !fixSqliteDate.contains("{");
+assert fixSqliteDate.contains("UPDATE");
+
+// No fluent assertions or custom matchers
 ```
 
-### Null and Edge Case Testing
-
-Every testable class includes explicit null/empty/edge case tests:
-
-```java
-// src/test/java/com/unicenta/pos/util/LuhnAlgorithmTest.java
-@Test
-public void nullInputReturnsFalse() {
-    assertFalse(LuhnAlgorithm.checkCC(null));
-}
-
-@Test
-public void emptyStringReturnsFalse() {
-    assertFalse(LuhnAlgorithm.checkCC(""));
-}
-
-@Test
-public void nonNumericLettersReturnsFalse() {
-    assertFalse(LuhnAlgorithm.checkCC("abcdefghijk"));
-}
-```
-
-### Expected Exception Testing
-
-Use `@Test(expected = ...)` annotation:
-
-```java
-// src/test/java/com/unicenta/pos/util/StringUtilsTest.java
-@Test(expected = IllegalArgumentException.class)
-public void hex2byte_oddLengthString_throwsIllegalArgumentException() {
-    StringUtils.hex2byte("ABC");
-}
-
-// src/test/java/com/unicenta/pos/payment/VoucherPaymentInfoTest.java
-@Test(expected = UnsupportedOperationException.class)
-public void getTendered_throwsUnsupportedOperationException() {
-    VoucherPaymentInfo p = new VoucherPaymentInfo(15.00, "voucher", "V-001");
-    p.getTendered();
-}
-```
-
-### Roundtrip Testing
-
-For encode/decode pairs, test roundtrip integrity:
-
-```java
-// src/test/java/com/unicenta/pos/util/Base64EncoderTest.java
-@Test
-public void roundtripAsciiString() {
-    byte[] original = "Hello, World!".getBytes(StandardCharsets.UTF_8);
-    String encoded = Base64Encoder.encode(original);
-    byte[] decoded = Base64Encoder.decode(encoded);
-    assertArrayEquals(original, decoded);
-}
-```
-
-### Copy/Clone Independence Testing
-
-For `copy*()` methods, verify the copy is independent:
-
-```java
-// src/test/java/com/unicenta/pos/ticket/TicketLineInfoTest.java
-@Test
-public void copyTicketLineIsIndependent() {
-    TicketLineInfo original = line(2.0, 10.0);
-    TicketLineInfo copy = original.copyTicketLine();
-    copy.setPrice(99.0);
-    assertEquals(10.0, original.getPrice(), DELTA);  // original unchanged
-}
-```
-
-### Constraint/Validation Chain Testing
-
-For classes that apply validation chains (like `FormatsValidate`):
-
-```java
-// src/test/java/com/unicenta/format/FormatsValidateTest.java
-@Test
-public void multipleConstraintsChainInOrder() throws BasicException {
-    FormatsConstrain addTen = new FormatsConstrain() {
-        @Override
-        public Object check(Object value) throws ParseException {
-            return (Integer) value + 10;
-        }
-    };
-    FormatsConstrain timesThree = new FormatsConstrain() {
-        @Override
-        public Object check(Object value) throws ParseException {
-            return (Integer) value * 3;
-        }
-    };
-
-    FormatsValidate fv = new FormatsValidate(Formats.INT,
-        new FormatsConstrain[]{addTen, timesThree});
-    String formatted = Formats.INT.formatValue(5);
-    Object result = fv.parseValue(formatted);
-    Assert.assertEquals(45, result);  // 5 -> +10=15 -> *3=45
-}
-```
+**Test Naming:**
+- Descriptive names starting with `should`: `shouldGroupTwoOfTheSameProduct()`
+- Clear intent: `shouldConvertUpdateToSQLite()`, `shouldConvertJoinToSQLite()`
 
 ## CI/CD Integration
 
-### GitHub Actions Workflows
+**GitHub Actions Configuration:**
 
-Three workflows in `.github/workflows/`:
-
-**`ci.yml` -- Build + Test + Coverage:**
-
-- Triggers: push to `main`, PRs to `main`
-- Java 11 (Temurin) with Maven cache
-- Runs `mvn -B clean verify`
-- Uploads JaCoCo XML to Codecov
-- Uploads JAR artifact on `main` pushes (30-day retention)
-
-**`semgrep.yml` -- SAST Security Scanning:**
-
-- Triggers: push to `main`, PRs to `main`
-- Runs Semgrep CI in container
-
-**`claude.yml` -- AI Code Review:**
-
-- Triggers: issue/PR comments containing `@claude`
-- Runs Claude Code Action for automated review
-
-### CodeRabbit
-
-Automatic code review on all PRs. After addressing CodeRabbit feedback, resolve the PR review threads to unblock merge.
-
-## Test Gaps (Priority Areas)
-
-### High Priority -- Business Logic
-
-- `src/main/java/com/unicenta/pos/forms/DataLogicSales.java` (2827 lines, 0 tests) -- core sales data operations
-- `src/main/java/com/unicenta/pos/panels/PaymentsModel.java` (1105 lines, 0 tests) -- payment calculations
-- `src/main/java/com/unicenta/pos/forms/DataLogicSystem.java` (891 lines, 0 tests) -- system data operations
-
-### Medium Priority -- Data Layer
-
-- `src/main/java/com/unicenta/data/loader/PreparedSentence.java` -- SQL execution
-- `src/main/java/com/unicenta/data/loader/Session.java` -- database connection management
-- `src/main/java/com/unicenta/data/user/BrowsableEditableData.java` -- CRUD operations
-
-### Low Priority -- UI Components
-
-- `src/main/java/com/unicenta/pos/sales/JPanelTicket.java` (3515 lines) -- main POS UI
-- `src/main/java/com/unicenta/beans/` -- custom Swing components
-- UI testing would require TestFX or similar, significant setup investment
-
-## Writing New Tests
-
-### Checklist for Adding a Test Class
-
-1. Create file at `src/test/java/com/unicenta/` mirroring the source path
-2. Name it `<SourceClass>Test.java`
-3. Use JUnit 4 imports (`org.junit.Test`, `org.junit.Assert`)
-4. Use static import for assertions: `import static org.junit.Assert.*;`
-5. No license header on test files
-6. Group tests with `// --- section name ---` comments
-7. Add `@After` cleanup if modifying static state (`Formats` patterns, etc.)
-8. Use factory helper methods for repeated object creation
-9. Test null inputs, empty strings, edge cases explicitly
-10. Use `assertEquals(expected, actual, 1e-9)` for all `double` comparisons
-
-### Template for New Test Class
-
-```java
-package com.unicenta.pos.example;
-
-import org.junit.Test;
-import static org.junit.Assert.*;
-
-public class ExampleClassTest {
-
-    // --- constructor ---
-
-    @Test
-    public void constructor_setsField() {
-        ExampleClass obj = new ExampleClass("value");
-        assertEquals("value", obj.getField());
-    }
-
-    // --- edge cases ---
-
-    @Test
-    public void constructor_nullField_isAllowed() {
-        ExampleClass obj = new ExampleClass(null);
-        assertNull(obj.getField());
-    }
-
-    // --- business logic ---
-
-    @Test
-    public void calculate_standardInput_returnsExpected() {
-        ExampleClass obj = new ExampleClass("input");
-        assertEquals(42.0, obj.calculate(), 1e-9);
-    }
-}
+From `.github/workflows/ci.yml`:
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 11
+        uses: actions/setup-java@v5
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B clean package --file pom.xml
+      - name: Upload build artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
 ```
+
+**Test Execution:**
+- Tests run as part of `mvn clean package` (Surefire bound to test phase)
+- Build fails if tests fail
+- No separate test-only job
+- CI runs on every push to `main` and pull requests
+- Artifacts uploaded on `main` branch only
+
+## Test Guidelines for Future Tests
+
+**When Adding New Tests:**
+
+1. **Naming:** Use `*Test.java` suffix and `should*` method names
+2. **Location:** Place in `src/test/java/` mirroring the package structure of classes being tested
+3. **Structure:** Keep tests focused on single behavior; use private helper methods for setup
+4. **Fixtures:** Create real domain objects, mock only external dependencies (DB, services)
+5. **Assertions:** Use `Assert.assertEquals()` for clarity; keep assertions simple and direct
+6. **Mocking:** Use `Mockito.mock()` and `Mockito.when().thenReturn()` for dependencies
+7. **Lifecycle:** Avoid `@Before`/`@After` unless absolutely necessary; prefer fresh object creation
+8. **Coverage:** Aim to test business logic; UI and framework code may need different strategies
 
 ---
 

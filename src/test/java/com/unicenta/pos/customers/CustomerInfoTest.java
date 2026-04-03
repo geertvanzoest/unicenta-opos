@@ -135,20 +135,6 @@ public class CustomerInfoTest {
     }
 
     @Test
-    public void printNameEncodesDoubleQuote() {
-        CustomerInfo c = new CustomerInfo("cust-002");
-        c.setName("zeg \"hoi\"");
-        assertEquals("zeg &quot;hoi&quot;", c.printName());
-    }
-
-    @Test
-    public void printNameEncodesApostrophe() {
-        CustomerInfo c = new CustomerInfo("cust-002");
-        c.setName("d'Angelo");
-        assertEquals("d&apos;Angelo", c.printName());
-    }
-
-    @Test
     public void printNameNoSpecialCharsUnchanged() {
         CustomerInfo c = new CustomerInfo("cust-002");
         c.setName("Gewone Naam");

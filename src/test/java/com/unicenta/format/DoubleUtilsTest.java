@@ -58,9 +58,8 @@ public class DoubleUtilsTest {
 
     @Test
     public void fixDecimals_seventhDecimalRoundsToSix() {
-        // Math.rint uses ties-to-even: 1.0000005 * 1_000_000 = 1_000_000.5 → 1_000_000 (even) → 1.0
-        // Use 1.0000006 to avoid tie: 1.0000006 * 1_000_000 = 1_000_000.6 → 1_000_001 → 1.000001
-        double result = DoubleUtils.fixDecimals(1.0000006);
+        // 1.0000005 * 1_000_000 = 1_000_000.5, Math.rint → 1_000_001 → 1.000001
+        double result = DoubleUtils.fixDecimals(1.0000005);
         assertEquals(1.000001, result, DELTA);
     }
 

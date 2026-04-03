@@ -228,8 +228,13 @@ public class FormatsTest {
     @Test
     public void setIntegerPatternCustom() {
         Formats.setIntegerPattern("000");
-        String result = Formats.INT.formatValue(5);
-        Assert.assertEquals("005", result);
+        try {
+            String result = Formats.INT.formatValue(5);
+            Assert.assertEquals("005", result);
+        } finally {
+            // restore default so other tests are not affected
+            Formats.setIntegerPattern(null);
+        }
     }
 
     @Test
@@ -252,7 +257,11 @@ public class FormatsTest {
     @Test
     public void setCurrencyPatternCustom() {
         Formats.setCurrencyPattern("#.00");
-        String result = Formats.CURRENCY.formatValue(3.0);
-        Assert.assertEquals("3.00", result);
+        try {
+            String result = Formats.CURRENCY.formatValue(3.0);
+            Assert.assertEquals("3.00", result);
+        } finally {
+            Formats.setCurrencyPattern(null);
+        }
     }
 }
