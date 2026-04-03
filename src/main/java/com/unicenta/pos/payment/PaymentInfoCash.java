@@ -50,7 +50,7 @@ public class PaymentInfoCash extends PaymentInfo {
      * @param prePayAmount
      */
     public PaymentInfoCash(double dTotal, double dPaid, double dTendered, double prePayAmount) {
-        this(dTotal, dTendered, dPaid);
+        this(dTotal, dPaid, dTendered);
         this.prePayAmount = prePayAmount;
     }
     
