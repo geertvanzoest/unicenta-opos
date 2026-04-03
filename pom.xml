@@ -564,18 +564,8 @@
       <url>https://repo1.maven.org/maven2/</url>
       <layout>default</layout>
     </repository>
-    <!--These are needed for Swing/Netbeans -->
-    <repository>
-      <id>netbeans</id>
-      <name>NetBeans</name>
-      <url>https://netbeans.apidesign.org/maven2/</url>
-    </repository>
-    <!--These are needed for Swing/Netbeans -->
-    <repository>
-      <id>flatlaf</id>
-      <name>flatlaf</name>
-      <url>https://dev.webswing.org/public/nexus/repository/webswing-3rd-parties//</url>
-    </repository>
+    <!-- netbeans repo verwijderd: SSL-certificaat verlopen (PKIX validation failure) -->
+    <!-- flatlaf repo verwijderd: niet nodig, flatlaf is beschikbaar via Maven Central -->
   </repositories>
   <distributionManagement>
     <repository>
