@@ -4,198 +4,167 @@
 
 ## Pattern Overview
 
-**Overall:** Layered MVC with a separated Data Access Layer
+**Overall:** Layered MVC with Bean Factory pattern for dependency injection. The application separates concerns into UI, business logic, and data access layers with support for multiple database backends via abstract factory patterns.
 
 **Key Characteristics:**
-- Three-tier architecture: Presentation (Swing/JavaFX UI), Business Logic (DataLogic), and Data Access (Session/SQL)
-- Swing-based forms with JavaFX support for modern UI elements
-- Domain objects (Info classes) for data representation
-- Database-agnostic design supporting multiple databases (MariaDB, MySQL, PostgreSQL, Derby, SQLite)
-- Module-based organization with functional domains (Sales, Payments, Inventory, Customers, etc.)
+- **Layered Architecture**: UI (Swing/JavaFX) → Business Logic (DataLogic*) → Data Access (Loader/Model) → Database
+- **Plugin/Factory Pattern**: `BeanFactory` implementations for dynamic instance creation and database-specific implementations
+- **Multi-Database Support**: Abstract database layers with platform-specific implementations (MySQL, MariaDB, PostgreSQL, Derby, SQLite)
+- **Domain Models**: Info* classes (`TicketInfo`, `ProductInfo`, `CustomerInfo`) represent core business entities with serialization
+- **Data Transfer Objects**: Separation between UI representation (Info classes) and database serialization (Row/Field model)
 
 ## Layers
 
 **Presentation Layer (UI):**
-- Purpose: Handle user interface rendering and user interactions
-- Location: `src/main/java/com/unicenta/pos/forms/`, `src/main/java/com/unicenta/pos/panels/`, `src/main/java/com/unicenta/beans/`
-- Contains: JFrame subclasses, JPanels, custom Swing components, forms (.form files), dialog windows
-- Depends on: Domain objects (Info classes), DataLogic classes, Beans components
-- Used by: Application startup and user event handling
-- Example entry points: `JRootFrame.java`, `JRootApp.java`
+- Purpose: Touch-friendly JavaFX and Swing interfaces, forms, dialogs, and visual components
+- Location: `src/main/java/com/unicenta/pos/forms/`, `src/main/java/com/unicenta/pos/sales/`, `src/main/java/com/unicenta/beans/`
+- Contains: Form panels (JPanel subclasses), filters, editors, main application window (`StartPOS`)
+- Depends on: Business Logic (DataLogic*), UI components (beans/), Format utilities
+- Used by: Application entry point, user interactions
 
-**Business Logic / Domain Layer:**
-- Purpose: Encapsulate POS business rules and workflows
-- Location: `src/main/java/com/unicenta/pos/` (domain-specific subdirectories)
-- Contains: DataLogic* classes, domain models (TicketInfo, PaymentInfo, CategoryInfo, etc.), business orchestration
-- Depends on: Data Access Layer (Session), utility classes
-- Used by: Presentation Layer, orchestrates data flow
-- Example classes: `DataLogicSales.java`, `DataLogicSystem.java`, `DataLogicCustomers.java`
+**Business Logic Layer:**
+- Purpose: Orchestrates business processes, enforces rules, coordinates between UI and data access
+- Location: `src/main/java/com/unicenta/pos/forms/DataLogic*.java` (e.g., `DataLogicSales`, `DataLogicOrders`)
+- Contains: Core business services that manage tickets, payments, inventory, customers
+- Depends on: Data Access layer (Loader, Session), Domain models (Info* classes), Configuration (AppConfig)
+- Used by: UI components, Forms layer
 
 **Data Access Layer:**
-- Purpose: Manage database connectivity, transactions, and SQL execution
+- Purpose: SQL generation, prepared statements, database operations, session management
 - Location: `src/main/java/com/unicenta/data/loader/`, `src/main/java/com/unicenta/data/model/`
-- Contains: Session (connection management), SQL builders, table/column metadata, prepared statement executors
-- Depends on: JDBC, database drivers
-- Used by: DataLogic classes, domain models
-- Core classes: `Session.java`, `SessionDB.java`, `BatchSentence.java`, `Table.java`, `Row.java`
+- Contains: `Session`, `PreparedSentence`, `Row`, `Field`, `Table`, `Datas` type system, serializers
+- Depends on: JDBC, database drivers (MariaDB, MySQL, PostgreSQL, Derby, SQLite)
+- Used by: DataLogic* classes, business services
 
-**Domain Models (Info Objects):**
-- Purpose: Represent business entities with serialization support
-- Location: Throughout domain packages (e.g., `com/unicenta/pos/ticket/`, `com/unicenta/pos/payment/`)
-- Contains: Classes implementing `SerializableRead`, `Externalizable` (e.g., TicketInfo, PaymentInfo, CustomerInfoExt)
-- Pattern: Usually immutable or semi-immutable, support persistence
-- Example classes: `TicketInfo.java`, `PaymentInfo.java`, `CategoryInfo.java`, `CustomerInfoExt.java`
+**Database Abstraction Layer:**
+- Purpose: Hide database-specific differences behind factory pattern
+- Location: `src/main/java/com/unicenta/data/loader/SessionDB*.java`
+- Contains: Database-specific connection wrappers, sequence generators, SQL dialect handling
+- Depends on: Database drivers
+- Used by: Session initialization
 
-**Support Layers:**
+**Core Domain Models:**
+- Purpose: Represent business concepts and data structures
+- Location: `src/main/java/com/unicenta/pos/ticket/`, `src/main/java/com/unicenta/pos/` (Info* classes)
+- Contains: `TicketInfo`, `TicketLineInfo`, `ProductInfo`, `CustomerInfo`, `PaymentInfo`, `TaxInfo`
+- Depends on: Format utilities, basic exceptions
+- Used by: All layers
 
-- **Formatting & Internationalization:** `src/main/java/com/unicenta/format/` - Locale-aware formatting for numbers, currency, dates
-- **Utilities:** `src/main/java/com/unicenta/pos/util/` - Encryption, encoding, string manipulation, hardware utilities
-- **Exception Handling:** `com/unicenta/basic/BasicException.java` - Base exception class for application errors
-- **Device Integration:** `src/main/java/com/unicenta/pos/printer/`, `src/main/java/com/unicenta/pos/scale/`, `src/main/java/com/unicenta/pos/scanpal2/` - Hardware device abstraction
+**Utilities & Support:**
+- Purpose: Cross-cutting concerns, shared functionality
+- Location: `src/main/java/com/unicenta/format/`, `src/main/java/com/unicenta/basic/`, `src/main/java/com/unicenta/pos/util/`
+- Contains: Formatting, localization (`AppLocal`), configuration (`AppConfig`), exception handling
+- Used by: All layers
 
 ## Data Flow
 
-**Ticket Creation & Sales Flow:**
+**Ticket Creation & Sale Flow:**
 
-1. User selects product from catalog (`JCatalog.java` → `JProductsSelector.java`)
-2. Catalog lookup via `DataLogicSales.loadCategories()` queries database through `Session`
-3. Product added to current `TicketInfo` (in-memory cart)
-4. `TicketInfo` accumulates line items (`TicketLineInfo` list) and payment information
-5. Payment selection via `JPaymentSelect.java` creates `PaymentInfo` subclass instances
-6. `DataLogicSales.saveTicket()` persists ticket and lines to database via `Session` and `BatchSentence`
-7. `TicketParser.java` formats ticket data for printer output via `DeviceTicket`
+1. User interacts with sales UI (`JTicketsBag`, `JProductLineEdit`)
+2. UI calls DataLogicSales methods to fetch products, apply taxes, calculate totals
+3. DataLogicSales executes SQL via PreparedSentence objects created from Row definitions
+4. Session executes JDBC queries with appropriate database-specific dialect
+5. Results serialized via RowSerializerRead back to domain models
+6. TicketInfo constructed with TicketLineInfo items and payments
+7. Ticket persisted via DataLogicSales.saveSale() → Row.getInsertSentence() → JDBC
+8. PaymentInfo processed, cash drawer signals, receipts printed via JasperReports
 
-**Data Persistence Pattern:**
+**Data Loading:**
 
-1. Domain objects (TicketInfo, PaymentInfo) are passed to DataLogic methods
-2. DataLogic extracts data and builds SQL via `BatchSentence` (prepared statement wrapper)
-3. `Session.execute()` runs batched SQL statements in transaction
-4. Results mapped back to domain objects via `DataRead` interface
-5. Transaction commits/rolls back via `Session.commit()` / `Session.rollback()`
-
-**Configuration & Initialization:**
-
-1. `StartPOS.main()` → `AppConfig.load()` reads properties from config files
-2. `Formats` static methods configured with locale/pattern settings
-3. `JRootApp.initApp()` initializes database connection via `Session`
-4. `DataLogicSystem` loads system configuration and active cash state
-5. Application state maintained in `JRootApp` instance variables
+1. Session created with database connection details
+2. Row objects define table structure (Fields with types, primary keys)
+3. SentenceList/ListProvider load data from database via serializers
+4. Results filtered, sorted via ComparatorCreator
+5. UI renders results via Vectorer/ListCellRenderer interfaces
 
 **State Management:**
-
-- **Active Cash State:** `JRootApp` maintains `m_sActiveCashIndex`, `m_dActiveCashDateStart`, etc.
-- **Session State:** `Session` object holds active database connection, transaction state
-- **Current Ticket:** `JRootApp` holds current `TicketInfo` being edited
-- **UI State:** Each panel/form maintains component state via Swing patterns
+- **Transient**: Ticket data held in `TicketInfo` object during sales session
+- **Persistent**: Committed to database via PreparedSentence insert/update/delete
+- **Configuration**: AppConfig loads from `.properties` file on startup
+- **User Session**: AppUser tracks logged-in user, permissions, active cash drawer
 
 ## Key Abstractions
 
-**Domain Objects (Info Classes):**
-- Purpose: Immutable representations of business entities
-- Pattern: Implement `SerializableRead`, `Externalizable` for persistence
-- Examples: `TicketInfo.java`, `PaymentInfo.java` (base), `PaymentInfoCash.java`, `PaymentInfoFree.java`, `PaymentInfoMagcard.java`
-- Location: Scattered across functional packages (ticket, payment, customers, etc.)
+**Datas Type System:**
+- Purpose: Type-safe SQL serialization mapping Java types to database columns
+- Examples: `Datas.STRING`, `Datas.DOUBLE`, `Datas.TIMESTAMP`, `Datas.INT`, `Datas.IMAGE`
+- Pattern: Enum-like constants with getValue/setValue methods for JDBC ResultSet/PreparedStatement
 
-**DataLogic Classes:**
-- Purpose: Business logic facades for specific domains
-- Pattern: Singleton-like usage, dependency injection via constructor
-- Access pattern: `DataLogic*.getXXX()`, `DataLogic*.saveXXX()`, `DataLogic*.deleteXXX()`
-- Examples: `DataLogicSales.java`, `DataLogicCustomers.java`, `DataLogicAdmin.java`
+**Row/Field Model:**
+- Purpose: Define table schema and generate SQL automatically
+- Examples: `src/main/java/com/unicenta/data/model/Row.java`, `src/main/java/com/unicenta/data/model/Field.java`
+- Pattern: Composition of Field objects specifying columns, types, search/comparable flags, formatting rules
 
-**Database Abstraction (Session/Table/Row/Column):**
-- Purpose: Provide database-agnostic SQL construction and execution
-- Pattern: Metadata-driven (Table/Column describe schema), SQL builders handle differences across DB engines
-- Classes: `Session.java` (connection), `Table.java` (schema), `Column.java` (field), `Row.java` (record), `BatchSentence.java` (prepared statement)
+**Sentence Pattern:**
+- Purpose: Abstract SQL execution interface
+- Examples: `SentenceExec`, `SentenceList`, `SentenceFind`, `PreparedSentence`
+- Pattern: Each represents a single SQL operation (insert, select, update, delete, list) with type-safe parameter binding
 
-**Payment Strategy (PaymentInfo Hierarchy):**
-- Purpose: Support multiple payment methods extensibly
-- Base: `PaymentInfo.java` (abstract concept)
-- Implementations: `PaymentInfoCash.java`, `PaymentInfoFree.java`, `PaymentInfoMagcard.java`, `VoucherPaymentInfo.java`, `PaymentInfoTicket.java`
-- Pattern: Strategy pattern, used in `PaymentInfoList.java`
+**Serializer Pattern:**
+- Purpose: Bidirectional mapping between domain objects and database rows
+- Examples: `SerializerRead`, `SerializerWrite`, `RowSerializerRead`
+- Pattern: Implement read(DataRead) / write(DataWrite) to transform between layers
 
-**Printer Abstraction (Device Pattern):**
-- Purpose: Support multiple printer types without coupling UI to printer details
-- Base: `DevicePrinter.java` (interface/null implementation), `DeviceTicket.java`
-- Implementations: JavaPOS, ESC/POS, screen display
-- Location: `src/main/java/com/unicenta/pos/printer/`
-
-**Scale Abstraction:**
-- Purpose: Integrate weight scales for product measurement
-- Base: `DeviceScale.java`
-- Examples: `ScaleCASPDII.java`, `ScaleAvery.java`, `ScaleComm.java`
-- Location: `src/main/java/com/unicenta/pos/scale/`
+**Factory Delegation:**
+- Purpose: Dynamic instantiation of database-specific implementations
+- Examples: `BeanFactoryData.init()` dynamically loads `ClassName + DatabaseName` class
+- Pattern: Allows single codebase to support multiple databases without conditional logic
 
 ## Entry Points
 
-**Application Startup:**
-- Location: `com/unicenta/pos/forms/StartPOS.java`
-- Triggers: JVM process start (`java -jar unicentaopos.jar`)
-- Responsibilities:
-  - Register application instance (single instance check via RMI)
-  - Load configuration via `AppConfig`
-  - Set Locale and Formats
-  - Select UI Look & Feel
-  - Create `JRootFrame` (windowed) or `JRootKiosk` (fullscreen)
-  - Start metrics reporting thread
-
-**UI Initialization:**
-- Location: `com/unicenta/pos/forms/JRootFrame.java` and `JRootApp.java`
-- Triggers: After config loaded
-- Responsibilities:
-  - Instantiate `JRootApp` (main application panel)
-  - Initialize database connection via `Session`
-  - Register RMI instance manager for single-instance enforcement
-  - Load all DataLogic modules
-  - Display main UI frame
+**Main Application:**
+- Location: `src/main/java/com/unicenta/pos/forms/StartPOS.java`
+- Triggers: `java -jar unicentaopos.jar`
+- Responsibilities: 
+  - Registers application instance via RMI (prevents multiple instances)
+  - Loads AppConfig from user home directory
+  - Sets up UI theme (FlatLaf, Substance, or platform default)
+  - Creates and shows main application window
 
 **Database Initialization:**
-- Location: `com/unicenta/data/loader/Session.java`
-- Triggers: On application startup via `JRootApp.initApp()`
-- Responsibilities:
-  - Create JDBC connection to configured database
-  - Manage transactions (begin/commit/rollback)
-  - Provide `SessionDB` utility for metadata queries
+- Location: `src/main/java/com/unicenta/data/loader/Session.java`
+- Triggers: AppConfig.load() during startup
+- Responsibilities: Establishes JDBC connection, validates database schema, selects database-specific implementation
+
+**Sales Module Entry:**
+- Location: `src/main/java/com/unicenta/pos/sales/JPanelTicketSales.java`
+- Triggers: User navigates to sales screen
+- Responsibilities: Initialize ticket bag, product catalog, payment processors
 
 ## Error Handling
 
-**Strategy:** Exception propagation with basic recovery
+**Strategy:** Checked exception bubble-up with translation to user-friendly messages
 
 **Patterns:**
-- `BasicException` is base class for application exceptions
-- `BasicException(String msg)` for error messages
-- Try-catch in main workflow methods with logging via Logback (Slf4j)
-- UI errors displayed via `JMessageDialog.java` (modal dialogs)
-- Database errors trigger transaction rollback via `Session.rollback()`
-- Hardware errors (printer, scale) handled via null implementations (`DevicePrinterNull.java`, etc.)
-
-**Logging:** Configured via `logback.groovy` in resources, uses `@Slf4j` Lombok annotation
+- `BasicException`: Base checked exception for data/business logic errors
+- Try-catch-log-rethrow in service layers (DataLogic*)
+- GUI error dialogs via `AppLocal.getIntString()` for localized messages
+- SQL errors caught as `SQLException`, translated to domain exceptions with context
+- Database connection failures handled in SessionDB implementations with fallback/retry logic
 
 ## Cross-Cutting Concerns
 
-**Logging:** 
-- Framework: Logback via SLF4J
-- Configuration: `src/main/resources/logback.groovy`
-- Usage: `@Slf4j` annotation on classes, `log.info()`, `log.error()` calls
+**Logging:** SLF4J with Logback backend configured in `logback.groovy`. Used via Lombok `@Slf4j` annotation for performance.
 
-**Validation:**
-- Pattern: Domain objects validate state (e.g., TicketInfo checks for required fields)
-- No centralized validation framework; validation embedded in business logic methods
-- Example: `DataLogicSales.validateTicket()` patterns
+**Validation:** 
+- Database-level constraints (primary keys, foreign keys, unique constraints)
+- UI-level validation in form components and editors
+- Business logic validation in DataLogic* classes (e.g., stock checks, payment amount validation)
 
 **Authentication:**
-- Pattern: User login via `JRootApp`, stored in `UserInfo` objects
-- Password verification against database via `DataLogicAdmin.getUserInfo()`
-- Session maintains current user context
+- AppUser tracks logged-in operator with role/permissions
+- Password hashing/verification at database level
+- Permission checks in UI component initialization
 
-**Transactions:**
-- Pattern: Explicit transaction management via `Session.begin()`, `commit()`, `rollback()`
-- Auto-commit disabled; transactions must be explicitly controlled by DataLogic methods
-- `BatchSentence` batches multiple statements, executed in single transaction
+**Localization:**
+- Messages bundled in `.properties` files under `src/main/resources/` (pos_messages_*.properties)
+- Resolved via `AppLocal.getIntString(key)` lookup
+- Locale set from AppConfig (user.language, user.country, user.variant)
 
-**Internationalization:**
-- Pattern: Property files per language (e.g., `pos_messages_nl.properties`, `pos_messages_en_US.properties`)
-- Loading: `AppLocal.getString()` static methods resolve messages from bundles
-- Locale set at startup via `Locale.setDefault()` from config
+**Formatting:**
+- Date/currency/number formats via `Formats` utility class
+- Applied consistently in Field.getFormat() for display
+- Database stores in ISO format, formatting happens at display boundary
 
 ---
 
