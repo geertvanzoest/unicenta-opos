@@ -69,11 +69,14 @@ body:
     validations:
       required: true
 
-  - type: input
+  - type: dropdown
     id: version
     attributes:
       label: uniCenta oPOS versie
-      placeholder: "5.0"
+      options:
+        - "5.0"
+        - "4.6.x"
+        - Anders
     validations:
       required: true
 
