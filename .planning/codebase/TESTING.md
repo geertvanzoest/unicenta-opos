@@ -46,16 +46,15 @@ mvn test -Dtest=ClassName     # Run specific test class
   - `com.unicenta.data.loader.StaticSentenceTest`
 
 **Structure:**
-```
+```text
 src/test/
 └── java/
     └── com/unicenta/
         ├── PackageScanTest.java
-        └── pos/
-            ├── ticket/
-            │   └── TicketInfoTest.java
-            └── data/loader/
-                └── StaticSentenceTest.java
+        ├── data/loader/
+        │   └── StaticSentenceTest.java
+        └── pos/ticket/
+            └── TicketInfoTest.java
 ```
 
 ## Test Structure

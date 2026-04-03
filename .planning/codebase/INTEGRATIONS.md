@@ -124,7 +124,7 @@
 
 **Logs:**
 - Logback 1.2.2 + SLF4J
-  - Configuration: Standard logback XML configuration expected
+  - Configuration: `src/main/resources/logback.groovy` (Groovy DSL format)
   - Logging pattern: Annotation-based with Lombok `@Slf4j`
   - Files: `src/main/java/com/unicenta/pos/forms/StartPOS.java` uses `@Slf4j` annotation
 

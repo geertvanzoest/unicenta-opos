@@ -23,7 +23,7 @@
 **Variables:**
 - camelCase for local and member variables: `m_instance`, `m_bDirty`, `searchkey`, `taxid`
 - boolean fields sometimes use `m_b` or `is` prefix: `m_bDirty` (older code), `isDirty()` (modern)
-- constants in UPPER_SNAKE_CASE: `serialVersionUID`, `UPDATE_SQL`, `JOIN_SQL`
+- constants in UPPER_SNAKE_CASE: `UPDATE_SQL`, `JOIN_SQL` (`serialVersionUID` is a Java-mandated exception)
 - abbreviations kept short: `m_` for member variables (older convention), `s` prefix for static
 
 **Types:**

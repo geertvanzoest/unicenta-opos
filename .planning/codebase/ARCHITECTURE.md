@@ -127,7 +127,7 @@
 - Responsibilities: Establishes JDBC connection, validates database schema, selects database-specific implementation
 
 **Sales Module Entry:**
-- Location: `src/main/java/com/unicenta/pos/forms/JPanelSales.java` (implied from forms directory)
+- Location: `src/main/java/com/unicenta/pos/sales/JPanelTicketSales.java`
 - Triggers: User navigates to sales screen
 - Responsibilities: Initialize ticket bag, product catalog, payment processors
 

@@ -172,7 +172,7 @@ unicenta-opos/
 **Internationalization:**
 - UI strings: Add key=value to `src/main/resources/pos_messages.properties`
 - Translations: Duplicate to `pos_messages_{locale}.properties` (e.g., `pos_messages_nl.properties`)
-- Messages property key naming: Camel case, hierarchical with dots (e.g., `label.product.name`, `button.save`)
+- Messages property key naming: dot-separated lowercase keys, hierarchical (e.g., `label.product.name`, `button.save`)
 
 **Reports:**
 - JasperReports definitions: `src/main/resources/com/unicenta/reports/{name}.jrxml`

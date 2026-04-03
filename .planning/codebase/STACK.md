@@ -15,7 +15,7 @@
 
 **Package Manager:**
 - Maven 3.x
-- Lockfile: `pom.xml` (present)
+- Build descriptor: `pom.xml` (present)
 
 ## Frameworks
 

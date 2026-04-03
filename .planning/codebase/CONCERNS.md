@@ -170,7 +170,7 @@
 - Impact: Security vulnerabilities not patched, Java 11+ compatibility gaps
 - Migration plan:
   1. Replace Velocity → Freemarker 2.3+
-  2. Replace BeanShell → GraalVM JavaScript or Nashorn
+  2. Replace BeanShell → GraalVM JavaScript
   3. Replace commons-digester → direct XML parsing or Spring
   4. Upgrade jfreechart to 1.5.3+
   5. Remove Substance LAF (use FlatLaf exclusively)
