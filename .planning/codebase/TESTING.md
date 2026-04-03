@@ -16,7 +16,7 @@
 **Mock Framework:**
 - Mockito 4.2.0
 - `mockito-inline` for mocking final/static classes
-- `mockito-junit-jupiter` for integration with JUnit (though JUnit 4 is primary)
+- `mockito-junit-jupiter` in pom.xml maar ongebruikt (alle tests zijn JUnit 4, geen JUnit 5 annotaties aanwezig)
 
 **Run Commands:**
 ```bash
