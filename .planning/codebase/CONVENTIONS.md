@@ -85,7 +85,10 @@ import com.unicenta.data.loader.DataWrite;
 import com.unicenta.format.Formats;
 import com.unicenta.pos.forms.AppLocal;
 import com.unicenta.pos.util.StringUtils;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Properties;
 ```
 
@@ -281,7 +284,7 @@ This adds no value. For new code, only add Javadoc when it provides information 
 
 ### File-Level Comments
 
-- GPL license header on production source files (see "File Header" above)
+- GPL header on production source files (see "File Header" above)
 - Author annotations: `@author adrianromero`, `@author jack gerrard`, `@author JG uniCenta`
 - Date annotations inline: `// JG 20 Sep 12 Extended for Postal`
 
