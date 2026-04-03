@@ -1,0 +1,94 @@
+name: Bug Report
+description: Meld een bug of onverwacht gedrag
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bedankt voor het melden! Vul onderstaande velden zo volledig mogelijk in.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschrijving
+      description: Wat gaat er mis?
+      placeholder: Beschrijf het probleem...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Stappen om te reproduceren
+      description: Hoe kunnen we het probleem nabootsen?
+      placeholder: |
+        1. Ga naar '...'
+        2. Klik op '...'
+        3. Zie fout
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Verwacht gedrag
+      description: Wat had er moeten gebeuren?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Werkelijk gedrag
+      description: Wat gebeurde er in plaats daarvan?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Besturingssysteem
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      options:
+        - MariaDB
+        - MySQL
+        - PostgreSQL
+        - Apache Derby
+        - SQLite
+    validations:
+      required: true
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: uniCenta oPOS versie
+      options:
+        - "5.0"
+        - "4.6.x"
+        - Anders
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logbestanden / foutmeldingen
+      description: Plak relevante log output of stack traces
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Voeg eventueel screenshots toe

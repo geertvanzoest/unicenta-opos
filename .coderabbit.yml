@@ -1,0 +1,16 @@
+language: nl
+reviews:
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "src/main/java/**"
+      instructions: "Java 11 codebase, POS-systeem. Let op security, SQL injection en null-safety."
+    - path: ".github/**"
+      instructions: "CI/CD en repo-configuratie. Controleer op best practices."
+chat:
+  auto_reply: true
