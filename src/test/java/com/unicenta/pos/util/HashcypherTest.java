@@ -29,9 +29,9 @@ public class HashcypherTest {
 
     @Test
     public void hashStringKnownValue() {
-        // SHA-1("Hello") = aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d
+        // SHA-1("Hello") in UTF-8
         String hash = Hashcypher.hashString("Hello");
-        assertEquals("sha1:AAF4C61DDCC5E8A2DABEDE0F3B482CD9AEA9434D", hash);
+        assertEquals("sha1:F7FF9E8B7BB2E09B70935A5D785E0CC5D9D0ABF0", hash);
     }
 
     @Test
