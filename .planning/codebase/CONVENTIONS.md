@@ -318,7 +318,7 @@ And:
 **Language:** Commit messages in Nederlands (Dutch)
 
 **Format:** Conventional-commit style with Dutch descriptions:
-```
+```text
 <type>: <beschrijving>
 ```
 
@@ -330,7 +330,7 @@ And:
 - `deps:` -- dependency updates
 
 **Examples from git log:**
-```
+```text
 test: unit tests voor PaymentInfoCash, PaymentInfoFree, VoucherPaymentInfo
 fix: corrigeer SHA-1 verwachte waarde in HashcypherTest
 docs: verwerk CodeRabbit review feedback op codebase documentatie

@@ -88,6 +88,8 @@ public class VoucherPaymentInfoTest {
         VoucherPaymentInfo p = new VoucherPaymentInfo(15.00, "voucher", "V-001");
         PaymentInfo copy = p.copyPayment();
         assertEquals(p.getTotal(), copy.getTotal(), 0.001);
+        assertEquals(p.getName(), copy.getName());
+        assertEquals(p.getVoucher(), copy.getVoucher());
     }
 
     // --- print methods ---

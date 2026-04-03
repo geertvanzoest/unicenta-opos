@@ -136,6 +136,8 @@ public class PaymentInfoCashTest {
         PaymentInfoCash p = new PaymentInfoCash(25.00, 30.00, 50.00);
         PaymentInfo copy = p.copyPayment();
         assertEquals(p.getTotal(), copy.getTotal(), 0.001);
+        assertEquals(p.getPaid(), copy.getPaid(), 0.001);
+        assertEquals(p.getTendered(), copy.getTendered(), 0.001);
         assertEquals(p.getName(), copy.getName());
     }
 

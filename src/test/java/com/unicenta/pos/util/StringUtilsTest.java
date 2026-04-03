@@ -204,5 +204,7 @@ public class StringUtilsTest {
         String second = StringUtils.getCardNumber();
         assertEquals(12, first.length());
         assertEquals(12, second.length());
+        assertTrue(first.matches("\\d{12}"));
+        assertTrue(second.matches("\\d{12}"));
     }
 }
