@@ -1,0 +1,55 @@
+name: Feature Request
+description: Stel een nieuwe functie of verbetering voor
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Heb je een idee om uniCenta oPOS beter te maken? Beschrijf het hieronder.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Probleem of aanleiding
+      description: Welk probleem lost deze feature op?
+      placeholder: Ik loop er tegenaan dat...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Gewenste oplossing
+      description: Beschrijf wat je graag zou willen zien
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatieven overwogen
+      description: Heb je andere oplossingen overwogen?
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      description: Op welk onderdeel heeft dit betrekking?
+      options:
+        - Verkoop / POS-scherm
+        - Voorraadbeheer
+        - Klantenbeheer
+        - Rapportage
+        - Restaurant-modus
+        - Betalingen
+        - Database
+        - Overig
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Extra context
+      description: Voeg eventueel screenshots, mockups of voorbeelden toe
