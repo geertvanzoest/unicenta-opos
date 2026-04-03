@@ -23,8 +23,16 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven
-        run: mvn -B clean package --file pom.xml
+      - name: Build and test with Maven
+        run: mvn -B clean verify --file pom.xml
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/site/jacoco/jacoco.xml
+          fail_ci_if_error: false
 
       - name: Upload build artifact
         if: github.ref == 'refs/heads/main'

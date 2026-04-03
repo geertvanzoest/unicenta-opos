@@ -4,6 +4,7 @@
 [![Maven](https://img.shields.io/badge/maven-build-blue?logo=apachemaven)](https://maven.apache.org/)
 [![JavaFX](https://img.shields.io/badge/javafx-11-green?logo=java)](https://openjfx.io/)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![codecov](https://codecov.io/gh/geertvanzoest/unicenta-opos/graph/badge.svg)](https://codecov.io/gh/geertvanzoest/unicenta-opos)
 
 Commercial-grade open source kassasysteem voor retail en horeca. Gebruikt door duizenden retailers, bars, cafés, restaurants en winkels wereldwijd.
 
