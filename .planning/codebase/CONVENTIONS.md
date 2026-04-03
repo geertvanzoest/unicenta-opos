@@ -65,7 +65,9 @@ public static String encodeXML(String sValue) {
 - Protected/private fields with no prefix but prefixed with type initial: `protected String id`, `protected Double curdebt`
 
 **Constants:**
-- UPPER_SNAKE_CASE: `serialVersionUID`, `hexchars`, `cardformat`, `cardrandom`
+- UPPER_SNAKE_CASE convention, e.g. `UPDATE_SQL`, `JOIN_SQL`
+- Note: `serialVersionUID` is a Java-mandated exception to UPPER_SNAKE_CASE
+- Legacy violations exist: `hexchars`, `cardformat`, `cardrandom` (lowercase instead of UPPER_SNAKE_CASE)
 - Example from `StringUtils.java` (line 36): `private static final char [] hexchars = {'0', '1', ...}`
 
 **Package Names:**
@@ -179,8 +181,8 @@ public class PreparedSentence extends JDBCSentence {
 - No format string placeholders in error logs (just `ex.getMessage()`)
 
 **Configuration:**
-- No `logback.xml` in repo - uses default/built-in configuration
-- Logback auto-configures when on classpath with SLF4J
+- Configuration: `src/main/resources/logback.groovy` (Groovy DSL format)
+- No `logback.xml` in repo — Groovy config takes precedence when present
 
 ## Documentation
 

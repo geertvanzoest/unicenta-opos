@@ -54,7 +54,7 @@
 **Logging:**
 - Logback 1.2.2 - SLF4J implementation for logging
   - Annotation: @Slf4j from Lombok used throughout codebase
-  - No explicit logback.xml configuration detected; uses defaults
+  - Configuration: `src/main/resources/logback.groovy` (Groovy DSL format)
 
 **Data Processing:**
 - Apache Commons utilities:

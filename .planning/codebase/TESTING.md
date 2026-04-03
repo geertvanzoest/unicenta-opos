@@ -43,7 +43,7 @@ mvn jacoco:report                   # Generate coverage report
 - File names match source class names: source `LuhnAlgorithm.java` → test `LuhnAlgorithmTest.java`
 
 **Directory Structure:**
-```
+```text
 src/test/java/
 ├── com/unicenta/
 │   ├── pos/
