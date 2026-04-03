@@ -5,255 +5,374 @@
 ## Code Style
 
 **Formatting:**
-- Java 11 codebase with 4-space indentation (implicit)
+- Java 11 codebase with 4-space indentation
 - Standard Java brace style: opening brace on same line as declaration
-- No explicit code style config file (Checkstyle, Spotbugs) configured
-- Maven compiler plugin with `showDeprecation=true` and debug enabled
+- No formatter/linter config present (no Checkstyle, Spotbugs, Google Java Format)
+- Maven compiler plugin with `showDeprecation=true` and `debug=true`
 
 **Line Length & Structure:**
 - No explicit line length limit enforced
-- Methods are typically under 100 lines, utilities under 50 lines
-- Classes follow single responsibility principle (e.g., `LuhnAlgorithm.java`, `StringUtils.java` are single-purpose utilities)
-
-**Example from `StringUtils.java` (lines 59-83):**
-```java
-public static String encodeXML(String sValue) {
-    if (sValue == null) {
-        return null;
-    } else {
-        StringBuilder buffer = new StringBuilder();      
-        for (int i = 0; i < sValue.length(); i++) {
-            char charToCompare = sValue.charAt(i);
-            if (charToCompare == '&') {
-                buffer.append("&amp;");
-            } else if (charToCompare == '<') {
-                buffer.append("&lt;");
-            } else if (charToCompare == '>') {
-                buffer.append("&gt;");
-            } else if (charToCompare == '\"') {
-                buffer.append("&quot;");
-            } else if (charToCompare == '\'') {
-                buffer.append("&apos;");
-            } else {
-                buffer.append(charToCompare);
-            }
-        }
-        return buffer.toString();
-    }
-}
-```
+- Utility methods typically 10-40 lines, domain getters/setters 1-3 lines
+- Large UI classes exist as outliers (see "Anti-patterns" below)
 
 ## Naming Conventions
 
-**Classes:**
-- PascalCase: `CustomerInfo`, `LuhnAlgorithm`, `PaymentInfoCash`, `StringUtils`
-- Info/Data suffix for domain objects: `CustomerInfo`, `PaymentInfoCash`, `TicketInfo`, `UserInfo`, `CategoryInfo`
-- Test classes suffix with `Test`: `LuhnAlgorithmTest`, `CustomerInfoTest`, `PaymentInfoCashTest`
-- Utility classes typically static-only: `StringUtils`, `RoundUtils`, `LuhnAlgorithm` (private constructor)
+### Classes
 
-**Methods:**
-- camelCase: `checkCC()`, `encodeXML()`, `authenticate()`, `hashString()`, `changePassword()`
-- Getters use `get` prefix: `getId()`, `getName()`, `getTaxid()`, `getSearchkey()`
-- Setters use `set` prefix: `setName()`, `setSearchkey()`, `setTaxid()`, `setPcode()`
-- Boolean getters use `is` or `has` prefix: `hasPrePay()`, `isValid()`
-- Print/format methods use `print` prefix: `printName()`, `printPaid()`, `printChange()`, `printTendered()`
+- **PascalCase** for all classes: `CustomerInfo`, `LuhnAlgorithm`, `PaymentInfoCash`
+- **`*Info` suffix** for domain value objects: `CustomerInfo`, `TaxInfo`, `TicketInfo`, `UserInfo`, `CategoryInfo`, `TicketLineInfo`, `TicketTaxInfo`
+- **`*Test` suffix** for test classes: `LuhnAlgorithmTest`, `CustomerInfoTest`
+- **`*Editor` suffix** for UI editor panels: `ProductsEditor`, `CategoriesEditor`, `TaxEditor`
+- **`*View` suffix** for read-only UI panels: `CustomersView`, `SuppliersView`
+- **`DataLogic*` prefix** for data access layer: `DataLogicSales`, `DataLogicSystem`, `DataLogicAdmin`
+- **`JPanel*`/`J*` prefix** for Swing panels: `JPanelTicket`, `JPanelCloseMoney`, `JRootApp`
+- Utility classes use private constructors and only static methods: `StringUtils`, `RoundUtils`, `LuhnAlgorithm`
 
-**Variables:**
-- camelCase: `cardNumber`, `sPassword`, `m_sentence`, `m_SerWrite`, `curdebt`
-- Field prefixes (legacy pattern): `m_` for members (`m_Stmt`, `m_sentence`, `m_SerRead`, `m_SerWrite`)
-- Acronyms lowercase in camelCase: `sValue`, `sHashPassword`, `sPassword` (s prefix indicates String type)
-- Protected/private fields with no prefix but prefixed with type initial: `protected String id`, `protected Double curdebt`
+### Methods
+
+- **camelCase** for all methods: `checkCC()`, `encodeXML()`, `authenticate()`, `hashString()`
+- **`get*` prefix** for getters: `getId()`, `getName()`, `getTaxid()`, `getSearchkey()`
+- **`set*` prefix** for setters: `setName()`, `setSearchkey()`, `setTaxid()`, `setPcode()`
+- **`is*`/`has*` prefix** for boolean getters: `hasPrePay()`, `isCascade()`
+- **`print*` prefix** for formatted-string methods: `printName()`, `printPaid()`, `printChange()`, `printTendered()`, `printTotal()`
+- **`copy*` prefix** for cloning: `copyPayment()`, `copyTicketLine()`
+
+### Variables and Fields
+
+Use camelCase, but three legacy naming patterns coexist:
+
+1. **`m_` prefix** (Hungarian notation) for private member fields -- dominant in legacy/upstream code:
+   - 1395 occurrences across 250 files
+   - Examples: `m_dPaid`, `m_dTotal`, `m_dTendered`, `m_sTicket`, `m_iLine`
+   - Sub-patterns: `m_d` for double, `m_s` for String, `m_i` for int
+
+2. **Type-initial prefix** for local/parameter variables (legacy):
+   - `s` prefix for String: `sValue`, `sPassword`, `sHashPassword`
+   - `d` prefix for double: `dTotal`, `dPaid`, `dMultiply`
+
+3. **Plain camelCase** without prefix (newer code):
+   - Examples: `prePayAmount`, `multiply`, `price`, `productid`, `curdebt`
+   - Use this style for **all new code**
 
 **Constants:**
-- UPPER_SNAKE_CASE convention, e.g. `UPDATE_SQL`, `JOIN_SQL`
-- Note: `serialVersionUID` is a Java-mandated exception to UPPER_SNAKE_CASE
-- Legacy violations exist: `hexchars`, `cardformat`, `cardrandom` (lowercase instead of UPPER_SNAKE_CASE)
-- Example from `StringUtils.java` (line 36): `private static final char [] hexchars = {'0', '1', ...}`
+- **UPPER_SNAKE_CASE**: `UPDATE_SQL`, `JOIN_SQL`, `RATE`, `DELTA`
+- Legacy violations exist but do not replicate: `hexchars`, `cardformat` in `src/main/java/com/unicenta/pos/util/StringUtils.java` line 36
 
-**Package Names:**
-- Reverse domain notation: `com.unicenta.pos`, `com.unicenta.data`, `com.unicenta.beans`, `com.unicenta.format`
-- Functional grouping: `com.unicenta.pos.customers`, `com.unicenta.pos.payment`, `com.unicenta.pos.util`, `com.unicenta.pos.forms`
+### Packages
+
+- Reverse domain: `com.unicenta.pos.*`, `com.unicenta.data.*`, `com.unicenta.beans.*`
+- Functional grouping by domain: `customers`, `payment`, `ticket`, `forms`, `util`, `inventory`
 
 ## Import Organization
 
-**Order:**
+**Order (as observed):**
 1. Package declaration
-2. Standard Java imports (`java.*`, `javax.*`)
-3. Third-party imports (`org.*`, `com.*` external)
-4. Internal imports (`com.unicenta.*`)
+2. Internal imports (`com.unicenta.*`)
+3. Third-party imports (`org.*`, `com.formdev.*`)
+4. Standard Java imports (`java.*`, `javax.*`)
 
-**Example from `CustomerInfo.java`:**
+Note: order is inconsistent across the codebase. Some files place `java.*` before `com.unicenta.*`. Use your IDE's default organize-imports.
+
+**No wildcard imports** -- explicit imports only.
+
+**Example from `src/main/java/com/unicenta/pos/ticket/TicketLineInfo.java`:**
 ```java
-package com.unicenta.pos.customers;
+package com.unicenta.pos.ticket;
 
+import com.unicenta.basic.BasicException;
+import com.unicenta.data.loader.DataRead;
+import com.unicenta.data.loader.DataWrite;
+import com.unicenta.format.Formats;
+import com.unicenta.pos.forms.AppLocal;
 import com.unicenta.pos.util.StringUtils;
-import java.awt.image.BufferedImage;
-import java.io.Serializable;
+import java.io.*;
+import java.util.Properties;
 ```
-
-**No wildcard imports observed** - explicit imports only.
 
 ## Common Patterns
 
-**Utility Classes:**
-- Static methods only with private constructor
-- Example `LuhnAlgorithm.java` (lines 26-30):
-```java
-public class LuhnAlgorithm {
-    private LuhnAlgorithm() {
-    }
-    public static boolean checkCC(String cardNumber) {
-        // implementation
-    }
-}
-```
+### File Header
 
-**Domain Objects (Info Classes):**
-- Immutable construction with mutable setters
-- Serializable with `serialVersionUID`
-- Implement `toString()` returning meaningful value
-- Example `CustomerInfo.java` (lines 30-57):
+Every source file starts with the GPL v3 license header (18 lines):
 ```java
-public class CustomerInfo implements Serializable {
-    private static final long serialVersionUID = 9083257536541L;
-    
-    protected String id;
-    protected String searchkey;
-    // ... other fields
-    
-    public CustomerInfo(String id) {
+//    uniCenta oPOS  - Touch Friendly Point Of Sale
+//    Copyright (c) 2009-2018 uniCenta
+//    https://unicenta.com
+//
+//    This file is part of uniCenta oPOS
+//    ... (GPL v3 text)
+```
+**Do NOT add this header to new test files.** Only production source files carry it.
+
+### Domain Objects (Info Classes)
+
+Standard pattern observed across `src/main/java/com/unicenta/pos/ticket/`, `src/main/java/com/unicenta/pos/payment/`, `src/main/java/com/unicenta/pos/customers/`:
+
+```java
+public class TaxInfo implements Serializable, IKeyed {
+    private static final long serialVersionUID = -2705212098856473043L;
+    private String id;
+    private String name;
+    // ... fields
+
+    public TaxInfo(String id, String name, ...) {
         this.id = id;
-        this.searchkey = null;
-        // ... initialize other fields to null
+        this.name = name;
+        // ...
     }
+
+    @Override
+    public Object getKey() { return id; }
+
+    // getters and setters ...
+
+    @Override
+    public String toString() { return name; }
 }
 ```
 
-**Builder/Constructor Overloading:**
-- Multiple constructors for flexibility
-- Example `PaymentInfoCash` (inferred from test): 2-arg, 3-arg, 4-arg constructors
-- Parent class constructor delegation: `super(s);`
+Key characteristics:
+- Implement `Serializable` with explicit `serialVersionUID`
+- Often implement `IKeyed` interface (returning primary key)
+- `toString()` returns the human-readable name field
+- Constructor initializes all fields; unset values are `null`
+- No validation in setters
+
+### Utility Classes
+
+Static-only classes with private constructor to prevent instantiation:
+```java
+public class StringUtils {
+    private StringUtils() {}
+    public static String encodeXML(String sValue) { ... }
+    public static String byte2hex(byte[] binput) { ... }
+}
+```
+
+Files: `src/main/java/com/unicenta/pos/util/StringUtils.java`, `src/main/java/com/unicenta/pos/util/RoundUtils.java`, `src/main/java/com/unicenta/pos/util/LuhnAlgorithm.java`
+
+### Constructor Overloading
+
+Multiple constructors for flexibility, often with delegation:
+```java
+// PaymentInfoCash — 2-arg, 3-arg, 4-arg constructors
+public PaymentInfoCash(double dTotal, double dPaid) { ... }
+public PaymentInfoCash(double dTotal, double dPaid, double dTendered) { ... }
+public PaymentInfoCash(double dTotal, double dPaid, double dTendered, double prePayAmount) {
+    this(dTotal, dTendered, dPaid);
+    this.prePayAmount = prePayAmount;
+}
+```
+
+### Abstract Base Classes
+
+Abstract classes define contracts for families of implementations:
+```java
+// src/main/java/com/unicenta/pos/payment/PaymentInfo.java
+public abstract class PaymentInfo {
+    public abstract String getName();
+    public abstract double getTotal();
+    public abstract PaymentInfo copyPayment();
+    public abstract String getTransactionID();
+    // ...
+    public String printTotal() {
+        return Formats.CURRENCY.formatValue(getTotal());
+    }
+}
+```
 
 ## Error Handling
 
-**Exception Hierarchy:**
-- Base exception: `BasicException` extends `java.lang.Exception` located at `com.unicenta.basic.BasicException`
-- Custom exceptions for domain-specific errors
-- Constructors support: message-only, message+cause, cause-only
+### Exception Hierarchy
 
-**Exception Patterns:**
-- Checked exceptions (BasicException) thrown and declared in method signatures
-- Example from `com.unicenta.data.loader.PreparedSentence`:
+- Base exception: `com.unicenta.basic.BasicException` extends `java.lang.Exception`
+- Supports: no-arg, message, message+cause, cause-only constructors
+- Used as checked exception throughout the data/business layer
+
+### Error Handling Patterns
+
+**Wrap-and-rethrow** (data layer):
 ```java
 catch (SQLException eSQL) {
     throw new BasicException(eSQL);
 }
 ```
 
-**Try-Catch-Finally:**
-- Resources properly closed in method implementations
-- Catch clauses typically log and either wrap in BasicException or handle gracefully
-- Observable from presence of `log.error(ex.getMessage())` pattern throughout codebase
-
-## Logging
-
-**Framework:** Logback (SLF4J facade)
-- Dependency: `ch.qos.logback:logback-classic:1.2.2`
-- Logger injection via **Lombok's `@Slf4j` annotation** - auto-generates `log` field
-
-**Example from `PreparedSentence.java` (lines 23, 34):**
+**Log-and-swallow** (UI layer -- common but not ideal):
 ```java
-@Slf4j
-public class PreparedSentence extends JDBCSentence {
-    // log field is auto-generated by Lombok
+catch (BasicException ex) {
+    log.error(ex.getMessage());
 }
 ```
 
-**Log Levels Used:**
-- `log.error()` - Exceptions and error conditions
-- `log.info()` - Informational messages (db operations, table existence checks, timing)
-- `log.warn()` - Not commonly observed in sampled code
-- `log.debug()` - Not commonly observed in sampled code
+**Expected exceptions** (via annotation in tests):
+```java
+@Test(expected = UnsupportedOperationException.class)
+public void getTendered_throwsUnsupportedOperationException() {
+    p.getTendered();
+}
+```
 
-**Logging Pattern:**
-- Error exceptions: `log.error(ex.getMessage())`
-- Info messages with context: `log.info("Fetch Orders from DB")`, `log.info("Time of getCustomersWithOutImage {}", (System.currentTimeMillis() - time))`
-- No format string placeholders in error logs (just `ex.getMessage()`)
+## Logging
 
-**Configuration:**
-- Configuration: `src/main/resources/logback.groovy` (Groovy DSL format)
-- No `logback.xml` in repo — Groovy config takes precedence when present
+### Framework
+
+- SLF4J facade via **Logback** (`ch.qos.logback:logback-classic:1.2.2`)
+- Logger injection via **Lombok `@Slf4j` annotation** on 53 classes
+- Only 1 class uses manual `LoggerFactory.getLogger()`: `src/main/java/com/unicenta/pos/forms/DataLogicSales.java`
+- 29 files still use `System.out.println()`/`System.err.println()` -- legacy code, do not replicate
+
+### Configuration
+
+Config file: `src/main/resources/logback.groovy` (Groovy DSL, not XML):
+```groovy
+def patternString = '%d{YYYY-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg %ex{20}%n'
+def userHome = System.getProperty("user.home")
+
+appender("applicationLogFile", RollingFileAppender) {
+  rollingPolicy(TimeBasedRollingPolicy) {
+    fileNamePattern = "$userHome/.unicenta/unicenta-%d{yyyy-MM-dd}.log"
+    maxHistory = "5"
+  }
+}
+
+appender('console', ConsoleAppender) { ... }
+logger('com.unicenta', INFO)
+root(INFO, ['console', 'applicationLogFile'])
+```
+
+### Usage Pattern
+
+For new classes, use Lombok's `@Slf4j`:
+```java
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class MyNewClass {
+    public void doSomething() {
+        log.info("Operation started");
+        log.error("Failed: {}", ex.getMessage());
+        log.debug("SQL: {}", sqlStatement);
+    }
+}
+```
+
+**Log levels observed:**
+- `log.error(ex.getMessage())` -- exception handling (omits stack trace; use `log.error("msg", ex)` for new code)
+- `log.info("descriptive message")` -- operational events, timing
+- `log.debug("SQL: {}", statement)` -- only in `StaticSentence` and `PreparedSentence`
+- `log.warn()` -- rarely used
 
 ## Documentation
 
-**Javadoc:**
-- Used extensively for public methods and classes
-- Format: `/** ... */` before class/method declaration
-- Includes `@author`, `@param`, `@return` tags
-- Example from `LuhnAlgorithm.java` (lines 32-36):
+### Javadoc
+
+Upstream code has minimal Javadoc -- most methods have empty `@param`/`@return` tags:
 ```java
 /**
  *
- * @param cardNumber
- * @return
+ * @param value
  */
-public static boolean checkCC(String cardNumber) {
+public void setName(String value) {
+    name = value;
+}
 ```
+This adds no value. For new code, only add Javadoc when it provides information not obvious from the method signature.
 
-**File Headers:**
-- GPL v3 license header on all files
-- Copyright: `uniCenta & previous Openbravo POS works` or similar
-- Author attribution: `@author jack gerrard`, `@author adrianromero`, `@author Mikel Irurita`, `@author JG uniCenta`
-- Links to project: `https://unicenta.com`
+### File-Level Comments
 
-**Inline Comments:**
-- Minimal inline comments observed
-- Comments explain WHY, not WHAT
-- Example from `RoundUtilsTest.java` (line 29):
+- GPL license header on production source files (see "File Header" above)
+- Author annotations: `@author adrianromero`, `@author jack gerrard`, `@author JG uniCenta`
+- Date annotations inline: `// JG 20 Sep 12 Extended for Postal`
+
+### Test Comments
+
+Tests use section headers to group related tests:
 ```java
-// Math.rint uses "round half to even" (banker's rounding)
-// 1.005 * 100 = 100.5 → rint → 100 (even) → 1.00
-double result = RoundUtils.round(1.005);
+// --- constructor sets id, others null ---
+@Test public void constructorSetsId() { ... }
+
+// --- setName / getName ---
+@Test public void setNameThenGetName() { ... }
 ```
 
-**Class-Level Documentation:**
-- Date annotations for changes: `// JG 20 Sep 12 Extended for Postal`
-- No extensive class-level comments, relying on self-documenting code
+Alternative separator styles also used:
+```java
+// =========================================================================
+// encodeXML
+// =========================================================================
+```
 
-## Function Design
+And:
+```java
+// -----------------------------------------------------------------------
+// hashString(String)
+// -----------------------------------------------------------------------
+```
 
-**Size:**
-- Utility functions typically 10-40 lines
-- Domain methods (getters/setters) 1-3 lines
-- Business logic methods 30-80 lines
-- Example: `Hashcypher.changePassword(Component, String)` is ~35 lines
+## Git/Commit Conventions
 
-**Parameters:**
-- Methods prefer 0-3 parameters
-- Longer parameter lists delegate to constructors or builder pattern
-- Example: PaymentInfoCash overloaded with 2, 3, and 4 parameter versions
+**Language:** Commit messages in Nederlands (Dutch)
 
-**Return Values:**
-- Explicit null returns common for optional values: `return null;`
-- Boolean for validation/checks: `public boolean hasPrePay()`
-- Wrapped exceptions converted to custom exception type: `throw new BasicException(eSQL);`
-- Void for void operations (very rare in sampled code)
+**Format:** Conventional-commit style with Dutch descriptions:
+```
+<type>: <beschrijving>
+```
 
-## Module Design
+**Types observed:**
+- `test:` -- nieuwe unit tests
+- `fix:` -- bugfixes
+- `docs:` -- documentatie
+- `ci:` -- CI/CD aanpassingen
+- `deps:` -- dependency updates
 
-**Exports:**
-- All public classes are export points
-- No package-private exports observed
-- Internal utility classes use private constructors: `private StringUtils() {}`
+**Examples from git log:**
+```
+test: unit tests voor PaymentInfoCash, PaymentInfoFree, VoucherPaymentInfo
+fix: corrigeer SHA-1 verwachte waarde in HashcypherTest
+docs: verwerk CodeRabbit review feedback op codebase documentatie
+ci: JaCoCo coverage + Codecov integratie + badge
+deps: bump maven-resources-plugin from 2.7 to 3.5.0 (#10)
+```
 
-**Barrel Files:**
-- No barrel files (index.java or similar) observed
-- Direct imports from specific classes preferred: `import com.unicenta.pos.util.StringUtils;`
+**Branch naming:** `test/unit-tests-coverage`, `fix/build-maven`
 
-**Packaging:**
-- Functional decomposition: features grouped by domain (customers, payment, ticket, util)
-- Data/persistence layer separate: `com.unicenta.data.loader`
-- UI components grouped: `com.unicenta.beans`, `com.unicenta.pos.forms`
+**Workflow:** Always branch -> commit -> push -> PR. Never commit directly to `main`.
+
+## Anti-patterns and Inconsistencies
+
+### God Classes
+Several files exceed 1000 lines (UI-heavy):
+- `src/main/java/com/unicenta/pos/sales/JPanelTicket.java` (3515 lines)
+- `src/main/java/com/unicenta/pos/transfer/Transfer.java` (3017 lines)
+- `src/main/java/com/unicenta/pos/forms/DataLogicSales.java` (2827 lines)
+- `src/main/java/com/unicenta/pos/config/JPanelConfigPeripheral.java` (2549 lines)
+- `src/main/java/com/unicenta/pos/inventory/ProductsEditor.java` (2370 lines)
+
+These are upstream legacy; do not refactor unless specifically tasked.
+
+### Mixed Naming Styles
+Three field naming conventions coexist (see "Variables and Fields" above). Use plain camelCase for all new code.
+
+### Commented-Out Code
+Production files contain commented-out code blocks:
+```java
+//    private double m_dTip;
+//        return new PaymentInfoCash(m_dTotal, m_dPaid, prePayAmount);
+```
+Do not add commented-out code. Use version control instead.
+
+### Empty TODO Comments
+15+ auto-generated `// TODO add your handling code here:` from NetBeans IDE forms throughout `src/main/java/com/unicenta/pos/config/` and `src/main/java/com/unicenta/pos/payment/`.
+
+### System.out Usage
+73 occurrences of `System.out.println()`/`System.err.println()` across 29 files -- legacy. Use `@Slf4j` + `log.*()` for new code.
+
+### Error Logging Without Stack Traces
+Common pattern `log.error(ex.getMessage())` loses the stack trace. For new code, use:
+```java
+log.error("Operation failed", ex);  // includes stack trace
+```
 
 ---
 

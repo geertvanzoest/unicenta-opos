@@ -2,216 +2,213 @@
 
 **Analysis Date:** 2026-04-03
 
-## Languages & Runtime
+## Languages
 
 **Primary:**
-- Java 11 - Core application language
-  - Compiler target: Java 11 (Maven properties `maven.compiler.source` and `maven.compiler.target`)
-  - Entry point: `com.unicenta.pos.forms.StartPOS`
+- Java 11 - All application code (`maven.compiler.source=11`, `maven.compiler.target=11`)
 
-**Build System:**
-- Apache Maven 3.x - Project build, dependency management, and packaging
-  - Configuration: `pom.xml` (located at `/Users/geert/src/hscjeka/unicenta-opos/pom.xml`)
-  - Build command: `mvn clean package`
-  - Executable JAR: `target/unicentaopos.jar`
-  - Classpath strategy: Dependencies copied to `target/lib/` during prepare-package phase
+**Secondary:**
+- Groovy - Logback configuration only (`src/main/resources/logback.groovy`)
+- BeanShell - Runtime scripting for reports and UI customization (70 `.bs` scripts in `src/main/resources/com/unicenta/reports/`)
+- SQL - Database schema and migration scripts (21 `.sql` files in `src/main/resources/com/unicenta/pos/scripts/`)
 
-## Frameworks & Libraries
+## Runtime
 
-**UI Frameworks:**
-- JavaFX 11 (OpenJFX) - Modern UI framework for GUI
-  - Components: javafx-base, javafx-controls, javafx-fxml, javafx-graphics, javafx-media, javafx-swing, javafx-web
-  - Located in: `src/main/java/com/unicenta/pos/forms/`, `src/main/java/com/unicenta/pos/sales/`, `src/main/java/com/unicenta/beans/`
-  
-- Swing - Legacy desktop UI components
-  - Dependencies: swingx-all 1.6.5-1, swing-layout 1.0.3
-  - Look and Feel support: Multiple themes via FlatLaf and Substance
-  
-- FlatLaf 1.6.5 - Modern flat look and feel for Swing
-  - Dependencies: flatlaf, flatlaf-intellij-themes 2.0.1, flatlaf-swingx
-  - Theme variants: Carbon, Dracula, Material Design Dark, Arc Dark, Atom One Light, GitHub, Material Lighter
+**Environment:**
+- JDK/JRE 11+ (OpenJDK or Oracle JDK)
+- CI uses Eclipse Temurin 11 (`.github/workflows/ci.yml`)
 
-- Substance 7.1.00 - Advanced Swing Look and Feel
+**Package Manager:**
+- Apache Maven 3.x
+- Lockfile: not present (Maven does not use lockfiles; versions pinned in `pom.xml`)
 
-**Charting & Graphics:**
-- JFreeChart 1.0.19 - Chart and graph generation for reports
-- JCommon 1.0.24 - Common utilities for JFreeChart
-- Apache FOP 2.1 - XSL-FO processor for PDF and print output
+## Frameworks
 
-**Reporting:**
-- JasperReports 6.4.0 - Report generation engine
-  - Supporting library: jasperreports-fonts 6.0.0, DynamicJasper-core-fonts 2.0
-  - Compiler: eclipse jdt core compiler (ecj) 4.6.1
-  - Viewer: `com.unicenta.pos.util.JRViewer400` (custom wrapper)
-  - Located in: `src/main/java/com/unicenta/pos/reports/`
-
-**Data Access & ORM:**
-- JDBC (Java Database Connectivity) - Raw JDBC layer
-  - Custom wrapper: `com.unicenta.data.loader.Session` handles connections and transactions
-  - Sentence layer: `com.unicenta.data.loader.JDBCSentence`, `PreparedSentence` for parameterized queries
-  - Located in: `src/main/java/com/unicenta/data/loader/`
-
-**Logging:**
-- Logback 1.2.2 - SLF4J implementation for logging
-  - Annotation: @Slf4j from Lombok used throughout codebase
-  - Configuration: `src/main/resources/logback.groovy` (Groovy DSL format)
-
-**Data Processing:**
-- Apache Commons utilities:
-  - commons-beanutils 1.9.3 - Bean property manipulation
-  - commons-codec 1.10 - Encoding/decoding (Base64, etc.)
-  - commons-collections 3.2.2 - Collection utilities
-  - commons-digester 2.1 - XML-to-object mapping
-  - commons-discovery 0.5 - Service discovery for SOAP
-  - commons-lang 2.6 - String and utility functions
-
-- Apache Velocity 1.7 - Template engine for dynamic content generation
-- ORO 2.0.8 - Regular expression library
-- BeanShell 2.0b4 - Dynamic scripting for reports/customization
-
-**File Format Support:**
-- Apache POI 3.10.1 - Excel (XLS) file generation and parsing
-- iText 2.1.7 - PDF generation (older version)
-- JavaCSV 2.0 - CSV file parsing and generation
-  - Used for product/customer imports in `src/main/java/com/unicenta/pos/imports/`
-
-**Hardware & Peripheral Integration:**
-- JavaPOS (javapos) 1.13 - Point of Sale terminal hardware control
-  - JPos 2.0.10 - ISO 8583 message handling for payment terminals
-  - RXTX 2.2 - Serial port communication (via org.qbang wrapper)
-  - USB4Java 1.2.0 - USB device communication
-  - USB API 1.0.2 - Standard USB interface
-  - OneWireAPI 0.1 - 1-Wire device protocol support
-  - Located in: `src/main/java/com/unicenta/pos/payment/`, `src/main/java/com/unicenta/pos/printer/`
-
-- Java Print Service (javax.print) - Standard printer interface
-  - Custom DevicePrinterPrinter: `src/main/java/com/unicenta/pos/printer/printer/DevicePrinterPrinter.java`
-
-**Web Services & APIs:**
-- Apache Axis 1.4 - SOAP web service client
-  - Dependencies: axis, axis-jaxrpc, axis-wsdl4j 1.5.1
-  - SAAJ API 1.3.5 - SOAP with Attachments API
-  - XML APIs 1.0.b2
-  - Located in: `src/main/java/com/unicenta/pos/transfer/` for ERP integrations
-
-**Database Abstraction:**
-- Custom database layer with multi-database support
-  - SessionDB factory pattern in `src/main/java/com/unicenta/data/loader/SessionDB*`
-  - Database-specific implementations for different SQL dialects
-
-**Utilities & Helpers:**
-- Lombok 1.18.6 (provided scope) - Annotations for getter/setter/logging generation
-- JodaTime 2.9.7 - Date/time manipulation
-- Reflections 0.9.12 - Classpath scanning and reflection utilities
-- AbsoluteLayout (NetBeans) RELEASE82 - UI layout manager
-- JDatePicker 1.3.4 - Date picker component
-- Berkeley DB JE 5.0.73 - Embedded key-value store (legacy)
-- Trident 1.4 - Animation library for UI transitions
-- Charm Glisten 6.2.2 - Gluon mobile-to-desktop UI bridge
-- WebLAF 1.2.9 - Additional look and feel theme
-
-**JAXB & Persistence:**
-- JAXB API 2.3.1 - XML binding and serialization
-- JPA Persistence API 1.0.2 - Standard Java persistence interface
+**Core:**
+- JavaFX 11 (OpenJFX) - Modern UI framework, modules: javafx-base, javafx-controls, javafx-fxml, javafx-graphics, javafx-media, javafx-swing, javafx-web
+- Swing - Legacy desktop UI with extended components (SwingX 1.6.5-1, swing-layout 1.0.3)
+- FlatLaf 1.6.5 - Modern flat Look and Feel for Swing (+ flatlaf-intellij-themes 2.0.1, flatlaf-swingx 1.6.5)
+- Substance 7.1.00 - Alternative Swing Look and Feel
+- WebLAF 1.2.9 / weblaf-ui 2.1.3 - Additional Look and Feel
 
 **Testing:**
-- JUnit 4.12 - Unit testing framework
-  - Scope: test
-  - Located in: `src/test/java/` (created during unit test phase)
-- Mockito 4.2.0 - Mocking framework for testing
-  - mockito-inline 4.2.0 - Inline mocking for static/private methods
-  - mockito-junit-jupiter 4.2.0 - JUnit 5 integration (scope: test)
+- JUnit 4.12 - Unit testing (scope: test)
+- Mockito 4.2.0 - Mocking (mockito-inline for static mocking, mockito-junit-jupiter unused but present)
+- JaCoCo 0.8.12 - Code coverage (maven plugin, reports to `target/site/jacoco/`)
 
-**Test Coverage:**
-- JaCoCo 0.8.12 - Code coverage analysis
-  - Generates coverage reports during test phase
-  - Report location: `target/site/jacoco/`
+**Build/Dev:**
+- maven-compiler-plugin 2.3.2 - Java compilation (showDeprecation=true, debug=true)
+- maven-jar-plugin 3.2.0 - Executable JAR packaging with manifest classpath
+- maven-dependency-plugin 2.10 - Copies dependencies to `target/lib/`
+- maven-resources-plugin 3.5.0 - Copies platform-native libraries, scripts, templates, reports, locales
+- jacoco-maven-plugin 0.8.12 - Coverage instrumentation and reporting
+- wagon-ftp 2.10 - Distribution management via FTP
 
-## Database Support
+## Key Dependencies
 
-**Supported Databases:**
-- MariaDB 10.x (primary) - JDBC driver: mariadb-java-client 2.7.0
-- MySQL 5.x - JDBC driver: mysql-connector-java 5.1.39
-- PostgreSQL 9.4+ - JDBC driver: postgresql 9.4.1208
-- Apache Derby 10.14 - Embedded relational database
-- SQLite 3.x - JDBC driver: sqlite-jdbc 3.7.2
+**Critical (core application functionality):**
+- `org.openjfx:javafx-*` 11 - GUI framework modules
+- `org.mariadb.jdbc:mariadb-java-client` 2.7.0 - Primary database driver
+- `net.sf.jasperreports:jasperreports` 6.4.0 - Report generation engine
+- `com.formdev:flatlaf` 1.6.5 - Default Look and Feel
+- `org.projectlombok:lombok` 1.18.6 (provided) - @Slf4j, @Getter, @Setter annotations
+- `ch.qos.logback:logback-classic` 1.2.2 - Logging implementation
+
+**Database Drivers:**
+- `org.mariadb.jdbc:mariadb-java-client` 2.7.0 - MariaDB (primary)
+- `mysql:mysql-connector-java` 5.1.39 - MySQL
+- `org.postgresql:postgresql` 9.4.1208 - PostgreSQL
+- `org.apache.derby:derby` 10.14.2.0 - Apache Derby (embedded, default for fresh installs)
+- `org.xerial:sqlite-jdbc` 3.7.2 - SQLite (experimental)
+
+**Hardware Integration:**
+- `com.javapos:jpos` 1.13 - JavaPOS hardware abstraction (printers, displays, fiscal devices)
+- `org.jpos:jpos` 2.0.10 - ISO 8583 payment terminal protocol
+- `org.bidib.jbidib.org.qbang.rxtx:rxtxcomm` 2.2 - Serial/parallel port communication
+- `org.usb4java:usb4java` 1.2.0 + `javax.usb:usb-api` 1.0.2 - USB device communication
+- `com.dalsemi.onewire:OneWireAPI` 0.1 - iButton/1-Wire authentication tokens
+
+**Reporting & Documents:**
+- `net.sf.jasperreports:jasperreports` 6.4.0 - Report templates (.jrxml, 67 templates)
+- `net.sf.jasperreports:jasperreports-fonts` 6.0.0 + `ar.com.fdvs:DynamicJasper-core-fonts` 2.0 - Embedded fonts
+- `org.eclipse.jdt.core.compiler:ecj` 4.6.1 - JasperReports expression compiler
+- `com.lowagie:itext` 2.1.7 - PDF generation (legacy, excluded from jasperreports to avoid conflict)
+- `org.apache.xmlgraphics:fop` 2.1 - XSL-FO to PDF/print
+- `org.apache.poi:poi` 3.10.1 - Excel export (XLS format)
+- `net.sf.barcode4j:barcode4j` 2.1 - Barcode generation (EAN-13, Code128, UPC-A, etc.)
+
+**Data Processing:**
+- `org.beanshell:bsh` 2.0b4 - Runtime scripting engine for report queries and UI logic
+- `org.apache.velocity:velocity` 1.7 - Template engine for dynamic content
+- `net.sourceforge.javacsv:javacsv` 2.0 - CSV parsing for product/customer imports
+- `joda-time:joda-time` 2.9.7 - Date/time manipulation
+
+**Apache Commons:**
+- `commons-beanutils` 1.9.3 - Bean property manipulation
+- `commons-codec` 1.10 - Encoding/decoding
+- `commons-collections` 3.2.2 - Collection utilities
+- `commons-digester` 2.1 - XML-to-object mapping
+- `commons-discovery` 0.5 - Service discovery (SOAP)
+- `commons-lang` 2.6 - String/utility functions
+
+**Charting:**
+- `org.jfree:jfreechart` 1.0.19 + `org.jfree:jcommon` 1.0.24 - Charts in reports
+
+**Web Services:**
+- `axis:axis` 1.4 - SOAP client
+- `org.apache.axis:axis-jaxrpc` 1.4 - JAX-RPC API
+- `axis:axis-wsdl4j` 1.5.1 - WSDL parsing
+- `javax.xml.soap:saaj-api` 1.3.5 - SOAP with Attachments
+
+**UI Components:**
+- `org.swinglabs.swingx:swingx-all` 1.6.5-1 - Extended Swing components
+- `org.swinglabs:swing-layout` 1.0.3 - GroupLayout for Swing
+- `org.netbeans.external:AbsoluteLayout` RELEASE82 - NetBeans layout manager
+- `org.jdatepicker:jdatepicker` 1.3.4 - Date picker widget
+- `com.gluonhq:charm-glisten` 6.2.2 - Gluon mobile-to-desktop UI bridge
+- `org.pushingpixels:trident` 1.4 - Animation library
+
+**Other:**
+- `javax.xml.bind:jaxb-api` 2.3.1 - XML binding
+- `javax.persistence:persistence-api` 1.0.2 - JPA interfaces (no ORM implementation used)
+- `xml-apis:xml-apis` 1.0.b2 - XML processing
+- `oro:oro` 2.0.8 - Regular expressions (legacy, Velocity dependency)
+- `org.reflections:reflections` 0.9.12 - Classpath scanning
+- `com.sleepycat:je` 5.0.73 - Berkeley DB Java Edition (embedded key-value store, legacy)
+- `com.unicenta:unicenta-plugins` 1.1 - Plugin framework (payment integrations, metrics)
+- `uk.co.pos_apps:openbravo` 1.0-SNAPSHOT - Openbravo ERP integration
 
 ## Configuration
 
 **Application Configuration:**
-- Properties-based configuration via `AppConfig` class
-- Configuration file: `[user.home]/unicentaopos.properties` (default location)
-- Database connection parameters read from `.properties` file:
-  - `db.engine` - Database engine type (MariaDB, MySQL, PostgreSQL, Apache Derby)
-  - `db.URL` - JDBC connection URL
-  - `db.user` - Database username
-  - `db.password` - Database password (encrypted with `crypt:` prefix using AltEncrypter)
-  - `db.name` - Database name
-  - `db.driver` - JDBC driver class
-  - `db.driverlib` - Path to custom driver JAR (optional)
-  - `db.schema` - Database schema name
-  - `db.options` - Additional connection options
-  - `db.multi` - Enable secondary database connection
+- Properties file: `[user.home]/unicentaopos.properties` (created on first run)
+- Managed by: `com.unicenta.pos.forms.AppConfig` (`src/main/java/com/unicenta/pos/forms/AppConfig.java`)
+- Defaults set in `loadDefault()` method covering database, printer, locale, payment, device, and table settings
+- Separate configuration UI entry point: `com.unicenta.pos.config.JFrmConfig` (launched via `configure.sh`)
 
-**UI Configuration:**
-- Locale settings: `user.language`, `user.country`, `user.variant`
-- Format patterns: `format.integer`, `format.double`, `format.currency`, `format.percent`, `format.date`, `format.time`, `format.datetime`
-- Theme: `swing.defaultlaf` - Full class name of LookAndFeel implementation
+**Key config properties:**
+- `db.engine` - Database type (Derby default)
+- `db.URL`, `db.user`, `db.password` - Connection credentials
+- `db.multi` - Enable secondary database
+- `machine.printer` - Receipt printer type (screen/printer/epson/star/javapos)
+- `machine.scale` - Weight scale type
+- `machine.display` - Customer display type
+- `machine.screenmode` - Window mode (fullscreen/windowed)
+- `swing.defaultlaf` - UI theme class
+- `payment.gateway` - Payment processor (external/PaymentSense)
 
-**Ticket & Report Configuration:**
-- Ticket header lines: `tkt.header1` through `tkt.header6`
-- Ticket footer lines: `tkt.footer1` through `tkt.footer6`
-- Machine hostname: `machine.hostname`
-
-**Resource Bundles:**
-- Localization via `.properties` files in `src/main/resources/`
-- Message keys for UI text, reports, and data layer
-- Language variants: en_US, es, fr, de, pt_BR, it, nl, hr, et, al_SQ, ar, da, etc.
+**Logging:**
+- Config file: `src/main/resources/logback.groovy`
+- Log location: `[user.home]/.unicenta/unicenta-YYYY-MM-DD.log`
+- Rolling policy: TimeBasedRollingPolicy, max 5 days history
+- Default level: INFO for `com.unicenta` package
+- Appenders: console + file
 
 **Build Configuration:**
 - Source encoding: UTF-8
-- Debug symbols: Enabled (`showDeprecation=true`, `debug=true`)
-- Dependency resolution: Maven Central + uniCenta repository + Gluon nexus
+- Compiler: showDeprecation=true, debug=true
+- Output JAR: `target/unicentaopos.jar` (finalName: unicentaopos)
+
+## Maven Repositories
+
+- Maven Central: `https://repo1.maven.org/maven2/`
+- uniCenta Repository: `https://repo.unicenta.org/maven2/` (custom dependencies: unicenta-plugins, openbravo)
+- Gluon Nexus: `https://nexus.gluonhq.com/nexus/content/repositories/releases/` (charm-glisten)
+- Distribution: FTP to `ftp://repo.unicenta.org/` via wagon-ftp
+
+## CI/CD
+
+**GitHub Actions Workflows:**
+- `ci.yml` - Build + test + coverage upload (Temurin JDK 11, `mvn -B clean verify`)
+  - Codecov upload: `target/site/jacoco/jacoco.xml`
+  - Build artifact: `target/unicentaopos.jar` (retained 30 days, main branch only)
+- `semgrep.yml` - SAST security scanning via Semgrep container
+- `claude.yml` - Additional CI workflow
+
+**External Services:**
+- Codecov - Code coverage tracking
+- Semgrep - Static analysis security scanning
+- CodeRabbit - Automated code review on PRs
+
+## Platform Requirements
+
+**Development:**
+- JDK 11+ (Temurin recommended)
+- Maven 3.6+
+- Database server: MariaDB/MySQL for full functionality, Derby for embedded testing
+
+**Production:**
+- JRE 11+
+- Database: MariaDB (recommended), MySQL, PostgreSQL, or embedded Derby
+- Minimum memory: `-Xms512m -Xmx1024m` (per `start.sh`)
+- Cross-platform: Windows, Linux (x86/x86_64/ia64), macOS, Solaris (SPARC)
+- Native libraries required for serial port access (RXTX `.so`/`.dll`/`.jnilib` in `src/other/`)
+
+**Deployment Artifacts:**
+- `target/unicentaopos.jar` - Main executable
+- `target/lib/` - All dependency JARs
+- `target/lib/Windows/`, `target/lib/Linux/`, `target/lib/Mac_OS_X/` - Platform-specific RXTX natives
+- `target/locales/` - Localization bundles
+- `target/reports/` - JasperReport templates
+- `target/Configs/` - Configuration templates
+- `target/Templates/` - Print templates
+- `target/Bonus/` - Sample product images
+- `start.sh` / `start.bat` - Launch scripts
+- `configure.sh` / `configure.bat` - Configuration UI launch scripts
 
 ## Project Metadata
 
 **Maven Coordinates:**
 - Group ID: `com.unicenta`
 - Artifact ID: `unicentaopos`
-- Version: 5.0
-- Packaging: JAR (executable with manifest classpath)
+- Version: `5.0`
+- Packaging: `jar`
 
-**Maven Repositories:**
-- Maven Central (https://repo1.maven.org/maven2/)
-- uniCenta Repository (https://repo.unicenta.org/maven2/)
-- Gluon Nexus (https://nexus.gluonhq.com/nexus/content/repositories/releases/) - for Charm Glisten
-
-**Manifest Information:**
-- Main-Class: `com.unicenta.pos.forms.StartPOS`
-- Implementation-Title: unicenta-pos
-- Implementation-Version: 5.0
-- Implementation-Vendor-Id: com.unicenta
-- Implementation-Vendor: unicenta.com
-
-## Platform Requirements
-
-**Development Environment:**
-- JDK 11+ (OpenJDK or Oracle JDK)
-- Maven 3.6+
-- IDE: NetBeans recommended (AbsoluteLayout support), Eclipse, or IntelliJ IDEA
-
-**Runtime Environment:**
-- JRE 11+
-- Database server (MariaDB, MySQL, PostgreSQL, or embedded Derby/SQLite)
-- System printer (for receipt/ticket printing)
-- Serial ports or USB (optional, for peripheral devices like card readers, scales)
-
-**Deployment Artifacts:**
-- Single executable JAR: `target/unicentaopos.jar`
-- Dependencies directory: `target/lib/` (included in distribution)
-- Platform-specific native libraries: `target/lib/Windows/`, `target/lib/Linux/`, `target/lib/Mac_OS_X/`
-- Configuration templates: `target/Configs/`
-- Report templates: `target/Templates/`, `target/reports/`
+**Application Identity:**
+- APP_NAME: `uniCenta oPOS` (defined in `src/main/java/com/unicenta/pos/forms/AppLocal.java`)
+- APP_ID: `unicentaopos`
+- APP_VERSION: `5.0`
+- Main class: `com.unicenta.pos.forms.StartPOS`
 
 ---
 
