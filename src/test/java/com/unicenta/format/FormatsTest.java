@@ -1,12 +1,19 @@
 package com.unicenta.format;
 
 import com.unicenta.basic.BasicException;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.SwingConstants;
 
 public class FormatsTest {
+
+    @After
+    public void resetPatterns() {
+        Formats.setIntegerPattern(null);
+        Formats.setCurrencyPattern(null);
+    }
 
     // ---- STRING ----
 

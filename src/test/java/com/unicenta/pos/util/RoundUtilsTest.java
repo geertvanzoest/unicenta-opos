@@ -1,6 +1,7 @@
 package com.unicenta.pos.util;
 
 import com.unicenta.format.Formats;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,8 +18,12 @@ public class RoundUtilsTest {
 
     @Before
     public void setTwoDecimalCurrency() {
-        // Force 2-decimal currency regardless of the test runner's locale
         Formats.setCurrencyPattern("0.00");
+    }
+
+    @After
+    public void resetCurrencyPattern() {
+        Formats.setCurrencyPattern(null);
     }
 
     // --- round() ---
