@@ -33,3 +33,5 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --system-prompt "Na het verwerken van review feedback (CodeRabbit of andere reviewers): resolve ALTIJD alle review threads die je hebt geadresseerd via de GitHub GraphQL API (resolveReviewThread mutation). Onopgeloste threads blokkeren de merge. Communicatie in het Nederlands."
