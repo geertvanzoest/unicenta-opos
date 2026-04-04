@@ -69,13 +69,10 @@ public class JPanelCloseMoney extends JPanel implements JPanelView, BeanFactoryA
     private final DateFormat df= new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");   
     
     private Session s;
-    private Connection con;  
+    private Connection con;
     private Statement stmt;
-    private PreparedStatement pstmt;
     private Integer result;
     private Integer dresult;
-    private String SQL;
-    private ResultSet rs;
     
     private AppUser m_User;
     
@@ -238,8 +235,9 @@ public class JPanelCloseMoney extends JPanel implements JPanelView, BeanFactoryA
        try{
             result=0;
             s=m_App.getSession();
-            con=s.getConnection();  
-            String sdbmanager = m_dlSystem.getDBVersion();           
+            con=s.getConnection();
+            String sdbmanager = m_dlSystem.getDBVersion();
+            String SQL;
 
             if ("PostgreSQL".equals(sdbmanager) || "SQLite".equals(sdbmanager)) {
                 SQL = "SELECT * FROM draweropened WHERE TICKETID = 'No Sale' AND OPENDATE > ?";
@@ -247,15 +245,16 @@ public class JPanelCloseMoney extends JPanel implements JPanelView, BeanFactoryA
                 SQL = "SELECT * FROM draweropened WHERE TICKETID = 'No Sale' AND OPENDATE > ?";
             }
 
-            pstmt = con.prepareStatement(SQL);
-            pstmt.setTimestamp(1, new Timestamp(m_PaymentsToClose.getDateStart().getTime()));
-            rs = pstmt.executeQuery();
-            while (rs.next()){
-                result ++;           
+            try (PreparedStatement pstmt = con.prepareStatement(SQL)) {
+                pstmt.setTimestamp(1, new Timestamp(m_PaymentsToClose.getDateStart().getTime()));
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()){
+                        result++;
+                    }
+                }
             }
-                rs=null;
 
-// Get Ticket DELETES & Line Voids            
+// Get Ticket DELETES & Line Voids
             dresult=0;
             if ("PostgreSQL".equals(sdbmanager) || "SQLite".equals(sdbmanager)) {
                 SQL = "SELECT * FROM lineremoved WHERE REMOVEDDATE > ?";
@@ -264,13 +263,14 @@ public class JPanelCloseMoney extends JPanel implements JPanelView, BeanFactoryA
             }
             log.debug("close-cash sql -> {}",SQL);
 
-            pstmt = con.prepareStatement(SQL);
-            pstmt.setTimestamp(1, new Timestamp(m_PaymentsToClose.getDateStart().getTime()));
-            rs = pstmt.executeQuery();
-            while (rs.next()){
-                dresult ++;           
+            try (PreparedStatement pstmt = con.prepareStatement(SQL)) {
+                pstmt.setTimestamp(1, new Timestamp(m_PaymentsToClose.getDateStart().getTime()));
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()){
+                        dresult++;
+                    }
+                }
             }
-                rs=null;
                 con=null;
                 s=null;                
             }  

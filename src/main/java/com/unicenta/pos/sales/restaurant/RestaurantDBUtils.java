@@ -20,10 +20,7 @@ import java.sql.Timestamp;
 
 public class RestaurantDBUtils {
     private Session s;
-    private Connection con;  
-    private PreparedStatement pstmt;
-    private String SQL;
-    private ResultSet rs;
+    private Connection con;
     private AppView m_App;
 
     protected DataLogicSystem dlSystem;
@@ -34,11 +31,11 @@ public class RestaurantDBUtils {
      */
     public RestaurantDBUtils(AppView oApp) {
         m_App=oApp;
-        
+
         try{
             s=m_App.getSession();
-            con=s.getConnection();                      
-        } catch (SQLException e){ 
+            con=s.getConnection();
+        } catch (SQLException e){
         }
     }
 
@@ -48,26 +45,26 @@ public class RestaurantDBUtils {
      * @param ticketID
      */
     public void moveCustomer(String newTable, String ticketID){
-      String oldTable=getTableDetails(ticketID); 
+      String oldTable=getTableDetails(ticketID);
 
         if (countTicketIdInTable(ticketID)>1){
             setCustomerNameInTable(getCustomerNameInTable(oldTable),newTable);
-            setWaiterNameInTable(getWaiterNameInTable(oldTable),newTable);  
+            setWaiterNameInTable(getWaiterNameInTable(oldTable),newTable);
             setTicketIdInTable(ticketID,newTable);
             setGuestsInTable(getGuestsInTable(oldTable),newTable);
-            
-            
 
-            oldTable = getTableMovedName(ticketID);  
+
+
+            oldTable = getTableMovedName(ticketID);
             if ((oldTable != null) && (oldTable != newTable)){
                 clearCustomerNameInTable(oldTable);
-                clearWaiterNameInTable(oldTable); 
+                clearWaiterNameInTable(oldTable);
                 clearTicketIdInTable(oldTable);
                 clearTableMovedFlag(oldTable);
             } else {
                 oldTable = getTableMovedName(ticketID);
-                clearTableMovedFlag(oldTable);                    
-            }      
+                clearTableMovedFlag(oldTable);
+            }
         }
   }
 
@@ -77,11 +74,9 @@ public class RestaurantDBUtils {
      * @param tableName
      */
     public void setCustomerNameInTable(String custName, String tableName){
-        try{
-            SQL = "UPDATE places SET CUSTOMER=? WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,custName); 
-            pstmt.setString(2,tableName);    
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET CUSTOMER=? WHERE NAME=?")) {
+            pstmt.setString(1,custName);
+            pstmt.setString(2,tableName);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -93,11 +88,9 @@ public class RestaurantDBUtils {
      * @param tableID
      */
     public void setCustomerNameInTableById(String custName, String tableID){
-        try{
-            SQL = "UPDATE places SET CUSTOMER=? WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,custName); 
-            pstmt.setString(2,tableID);    
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET CUSTOMER=? WHERE ID=?")) {
+            pstmt.setString(1,custName);
+            pstmt.setString(2,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -109,11 +102,9 @@ public class RestaurantDBUtils {
      * @param ticketID
      */
     public void setCustomerNameInTableByTicketId(String custName, String ticketID){
-        try{
-            SQL = "UPDATE places SET CUSTOMER=? WHERE TICKETID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,custName); 
-            pstmt.setString(2,ticketID);    
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET CUSTOMER=? WHERE TICKETID=?")) {
+            pstmt.setString(1,custName);
+            pstmt.setString(2,ticketID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -125,19 +116,16 @@ public class RestaurantDBUtils {
      * @return
      */
     public String getCustomerNameInTable(String tableName){
-        try{
-            SQL = "SELECT customer FROM places WHERE NAME=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT customer FROM places WHERE NAME=?")) {
             pstmt.setString(1, tableName);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()){
-                String customer =rs.getString("CUSTOMER");
-                return(customer); 
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getString("CUSTOMER");
+                }
+            }
         }catch(SQLException e){
-        }   
-        
+        }
+
         return "";
   }
 
@@ -147,16 +135,15 @@ public class RestaurantDBUtils {
      * @return
      */
     public String getCustomerNameInTableById(String tableId){
-        try{
-            SQL = "SELECT customer FROM places WHERE ID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT customer FROM places WHERE ID=?")) {
             pstmt.setString(1, tableId);
-            rs = pstmt.executeQuery();
-            if (rs.next()){
-                String customer =rs.getString("CUSTOMER");
-                return(customer); }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getString("CUSTOMER");
+                }
+            }
         }catch(SQLException e){
-        }   
+        }
 
         return "";
   }
@@ -166,10 +153,8 @@ public class RestaurantDBUtils {
      * @param tableName
      */
     public void clearCustomerNameInTable(String tableName){
-        try{
-            SQL = "UPDATE places SET CUSTOMER=null WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableName);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET CUSTOMER=null WHERE NAME=?")) {
+            pstmt.setString(1,tableName);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -180,10 +165,8 @@ public class RestaurantDBUtils {
      * @param tableID
      */
     public void clearCustomerNameInTableById(String tableID){
-        try{
-            SQL = "UPDATE places SET CUSTOMER=null WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableID);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET CUSTOMER=null WHERE ID=?")) {
+            pstmt.setString(1,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -195,27 +178,23 @@ public class RestaurantDBUtils {
      * @param tableName
      */
     public void setWaiterNameInTable(String waiterName, String tableName){
-        try{
-            SQL = "UPDATE places SET WAITER=? WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,waiterName); 
-            pstmt.setString(2,tableName);    
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET WAITER=? WHERE NAME=?")) {
+            pstmt.setString(1,waiterName);
+            pstmt.setString(2,tableName);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
     }
-  
+
     /**
      *
      * @param waiterName
      * @param tableID
      */
     public void setWaiterNameInTableById(String waiterName, String tableID){
-        try{
-            SQL = "UPDATE places SET WAITER=? WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,waiterName); 
-            pstmt.setString(2,tableID);    
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET WAITER=? WHERE ID=?")) {
+            pstmt.setString(1,waiterName);
+            pstmt.setString(2,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -227,18 +206,15 @@ public class RestaurantDBUtils {
      * @return
      */
     public String getWaiterNameInTable(String tableName){
-        try{
-            SQL = "SELECT waiter FROM places WHERE NAME=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT waiter FROM places WHERE NAME=?")) {
             pstmt.setString(1, tableName);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()){
-                String waiter =rs.getString("WAITER");
-                return(waiter);
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getString("WAITER");
+                }
+            }
         }catch(SQLException e){
-        }   
+        }
 
        return "";
     }
@@ -249,18 +225,15 @@ public class RestaurantDBUtils {
      * @return
      */
     public String getWaiterNameInTableById(String tableID){
-        try{
-            SQL = "SELECT waiter FROM places WHERE ID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT waiter FROM places WHERE ID=?")) {
             pstmt.setString(1, tableID);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()){
-                String waiter =rs.getString("WAITER");
-                return(waiter);
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getString("WAITER");
+                }
+            }
         }catch(SQLException e){
-        }   
+        }
 
         return "";
     }
@@ -270,10 +243,8 @@ public class RestaurantDBUtils {
      * @param tableName
      */
     public void clearWaiterNameInTable(String tableName){
-        try{
-            SQL = "UPDATE places SET WAITER=null WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableName);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET WAITER=null WHERE NAME=?")) {
+            pstmt.setString(1,tableName);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -284,12 +255,9 @@ public class RestaurantDBUtils {
      * @param tableID
      */
     public void clearWaiterNameInTableById(String tableID){
-        try{
-            SQL = "UPDATE places SET WAITER=null WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableID);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET WAITER=null WHERE ID=?")) {
+            pstmt.setString(1,tableID);
             pstmt.executeUpdate();
-            
         }catch(SQLException e){
         }
     }
@@ -300,21 +268,18 @@ public class RestaurantDBUtils {
      * @return
      */
     public String getTicketIdInTable(String ID){
-        try{
-            SQL = "SELECT TICKETID FROM places WHERE ID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT TICKETID FROM places WHERE ID=?")) {
             pstmt.setString(1, ID);
-            rs = pstmt.executeQuery();
-        
-            if (rs.next()){
-                String customer =rs.getString("TICKETID");
-                return(customer);
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getString("TICKETID");
+                }
+            }
         }catch(SQLException e){
-        }   
+        }
 
         return "";
-    }  
+    }
 
     /**
      *
@@ -322,14 +287,10 @@ public class RestaurantDBUtils {
      * @param tableName
      */
     public void setTicketIdInTable(String TicketID, String tableName){
-        try{
-//            SQL = "UPDATE places SET TICKETID=?, GUESTS=SEATS WHERE NAME=?";
-            SQL = "UPDATE places SET TICKETID=? WHERE NAME=?";            
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,TicketID); 
-            pstmt.setString(2,tableName);    
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET TICKETID=? WHERE NAME=?")) {
+            pstmt.setString(1,TicketID);
+            pstmt.setString(2,tableName);
             pstmt.executeUpdate();
-            
         }catch(SQLException e){
         }
     }
@@ -339,17 +300,14 @@ public class RestaurantDBUtils {
      * @param tableName
      */
     public void clearTicketIdInTable(String tableName){
-        try{
-//            SQL = "UPDATE places SET TICKETID=null WHERE NAME=?";
-            SQL = "UPDATE places SET TICKETID=null, OCCUPIED=null WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableName);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET TICKETID=null, OCCUPIED=null WHERE NAME=?")) {
+            pstmt.setString(1,tableName);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
 
         clearGuestsInTable(tableName);
-        
+
     }
 
     /**
@@ -357,85 +315,72 @@ public class RestaurantDBUtils {
      * @param tableID
      */
     public void clearTicketIdInTableById(String tableID){
-        try{
-            SQL = "UPDATE places SET TICKETID=null WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableID);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET TICKETID=null WHERE ID=?")) {
+            pstmt.setString(1,tableID);
             pstmt.executeUpdate();
-            
         }catch(SQLException e){
         }
     }
-    
+
     /**
      *
      * @param tableID
      * @return
      */
     public Integer getGuestsInTable(String tableID){
-        try{
-            SQL = "SELECT guests FROM places WHERE ID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT guests FROM places WHERE ID=?")) {
             pstmt.setString(1, tableID);
-            rs = pstmt.executeQuery();
-    
-            if (rs.next()){
-                Integer guests =rs.getInt("GUESTS");
-                return(guests);
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getInt("GUESTS");
+                }
+            }
         }catch(SQLException e){
         }
-    
-        return 0;        
+
+        return 0;
     }
-    
+
     /**
      *
      * @param guests
      * @param tableID
      */
     public void setGuestsInTable(Integer guests, String tableID){
-        try{
-            SQL = "UPDATE places SET GUESTS=? WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setInt(1,guests); 
-            pstmt.setString(2,tableID);    
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET GUESTS=? WHERE ID=?")) {
+            pstmt.setInt(1,guests);
+            pstmt.setString(2,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
     }
-    
+
     /**
      *
      * @param tableID
      * @return
      */
     public Integer updateGuestsInTable(String tableID){
-        try{
-            SQL = "SELECT guests FROM places WHERE ID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT guests FROM places WHERE ID=?")) {
             pstmt.setString(1, tableID);
-            rs = pstmt.executeQuery();
-    
-            if (rs.next()){
-                Integer guests =rs.getInt("GUESTS");
-                return(guests);
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getInt("GUESTS");
+                }
+            }
         }catch(SQLException e){
         }
-    
-        return 0;        
-    }     
+
+        return 0;
+    }
 
     /**
      *
      * @param tableID
     */
     public void clearGuestsInTable(String tableID){
-        try{
-            SQL = "UPDATE places SET guests=0 WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableID);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET guests=0 WHERE ID=?")) {
+            pstmt.setString(1,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -445,27 +390,22 @@ public class RestaurantDBUtils {
      * @param table
     */
     public void clearGuestsTable(String table){
-        try{
-            SQL = "UPDATE places SET guests=0 WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,table);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET guests=0 WHERE NAME=?")) {
+            pstmt.setString(1,table);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
-    }    
-   
+    }
+
     /**
      *
      * @param tableID
     */
     public void clearOccupied(String tableID){
-        try{
-            SQL = "UPDATE places SET occupied=null WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableID);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET occupied=null WHERE ID=?")) {
+            pstmt.setString(1,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
-            
         }
     }
     /**
@@ -473,69 +413,59 @@ public class RestaurantDBUtils {
      * @param table
     */
     public void clearOccupiedTable(String table){
-        try{
-            SQL = "UPDATE places SET occupied=null WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,table);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET occupied=null WHERE NAME=?")) {
+            pstmt.setString(1,table);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
-    }    
+    }
     /**
      *
      * @param tableID
      * @return
      */
     public Timestamp getOccupied(String tableID){
-        try{
-            SQL = "SELECT occupied FROM places WHERE ID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT occupied FROM places WHERE ID=?")) {
             pstmt.setString(1, tableID);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()){
-                Timestamp occupied =rs.getTimestamp("OCCUPIED");
-                return(occupied);
-            } 
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getTimestamp("OCCUPIED");
+                }
+            }
         }catch(SQLException e){
         }
-    
-        return null;        
-    }  
-    
+
+        return null;
+    }
+
     /**
      *
      * @param ticketID
     */
     public void setOccupied(String ticketID){
-        try{
-            SQL = "UPDATE places SET occupied=NOW() WHERE TICKETID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,ticketID);                 
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET occupied=NOW() WHERE TICKETID=?")) {
+            pstmt.setString(1,ticketID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
     }
-    
+
     /**
      *
      * @param ticketID
      * @return
     */
     public Integer countTicketIdInTable(String ticketID){
-        try{
-            SQL = "SELECT COUNT(*) AS RECORDCOUNT FROM places WHERE TICKETID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) AS RECORDCOUNT FROM places WHERE TICKETID=?")) {
             pstmt.setString(1, ticketID);
-            rs = pstmt.executeQuery();
-    
-            if (rs.next()){
-                Integer count =rs.getInt("RECORDCOUNT");
-                return(count);
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getInt("RECORDCOUNT");
+                }
+            }
         }catch(SQLException e){
         }
-    
+
         return 0;
     }
 
@@ -545,15 +475,12 @@ public class RestaurantDBUtils {
      * @return
      */
     public String getTableDetails (String ticketID){
-        try{
-            SQL = "SELECT NAME FROM places WHERE TICKETID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT NAME FROM places WHERE TICKETID=?")) {
             pstmt.setString(1, ticketID);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()){
-                String name =rs.getString("NAME");
-                return(name);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getString("NAME");
+                }
             }
         }catch(SQLException e){
         }
@@ -566,10 +493,8 @@ public class RestaurantDBUtils {
      * @param tableID
      */
     public void setTableMovedFlag (String tableID){
-        try{
-            SQL = "UPDATE places SET TABLEMOVED='true' WHERE ID=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableID);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET TABLEMOVED='true' WHERE ID=?")) {
+            pstmt.setString(1,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
@@ -581,21 +506,18 @@ public class RestaurantDBUtils {
      * @return
      */
     public String getTableMovedName (String ticketID){
-        try{
-            SQL = "SELECT NAME FROM places WHERE TICKETID=? AND TABLEMOVED ='true'";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT NAME FROM places WHERE TICKETID=? AND TABLEMOVED ='true'")) {
             pstmt.setString(1, ticketID);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()){
-                String name =rs.getString("NAME");
-                return(name);
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getString("NAME");
+                }
+            }
         }catch(SQLException e){
         }
-        
+
         return null;
-    }  
+    }
 
     /**
      *
@@ -603,18 +525,16 @@ public class RestaurantDBUtils {
      * @return
      */
     public Boolean getTableMovedFlag (String ticketID){
-        try{
-            SQL = "SELECT TABLEMOVED FROM places WHERE TICKETID=?";
-            pstmt = con.prepareStatement(SQL);
+        try (PreparedStatement pstmt = con.prepareStatement("SELECT TABLEMOVED FROM places WHERE TICKETID=?")) {
             pstmt.setString(1, ticketID);
-            rs = pstmt.executeQuery();
-            
-            if (rs.next()){
-                return(rs.getBoolean("TABLEMOVED"));
-            }    
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()){
+                    return rs.getBoolean("TABLEMOVED");
+                }
+            }
         }catch(SQLException e){
         }
-        
+
         return (false);
     }
 
@@ -623,12 +543,10 @@ public class RestaurantDBUtils {
      * @param tableID
      */
     public void clearTableMovedFlag (String tableID){
-        try{
-            SQL = "UPDATE places SET TABLEMOVED='false' WHERE NAME=?";
-            pstmt=con.prepareStatement(SQL);
-            pstmt.setString(1,tableID);     
+        try (PreparedStatement pstmt = con.prepareStatement("UPDATE places SET TABLEMOVED='false' WHERE NAME=?")) {
+            pstmt.setString(1,tableID);
             pstmt.executeUpdate();
         }catch(SQLException e){
         }
-    }  
+    }
 }

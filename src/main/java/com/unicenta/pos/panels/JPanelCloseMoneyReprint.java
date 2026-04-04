@@ -41,6 +41,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -60,13 +61,10 @@ public class JPanelCloseMoneyReprint extends JPanel implements JPanelView, BeanF
     private final DateFormat df= new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");   
     
     private Session s;
-    private Connection con;  
+    private Connection con;
     private Statement stmt;
-    private PreparedStatement pstmt;
     private Integer result;
-    private Integer dresult;    
-    private String SQL;
-    private ResultSet rs;
+    private Integer dresult;
     
     private AppUser m_User;
     
@@ -212,23 +210,26 @@ public class JPanelCloseMoneyReprint extends JPanel implements JPanelView, BeanF
             try{
                 result=0;
                 s=m_App.getSession();
-                con=s.getConnection();  
-                String sdbmanager = m_dlSystem.getDBVersion();           
+                con=s.getConnection();
+                String sdbmanager = m_dlSystem.getDBVersion();
+                Timestamp dateStart = Timestamp.valueOf(m_PaymentsClosed.getDateStart());
 
+                String SQL;
                 if ("PostgreSQL".equals(sdbmanager)) {
                     SQL = "SELECT * FROM draweropened WHERE TICKETID = 'No Sale' AND OPENDATE > ?";
                 } else {
                     SQL = "SELECT * FROM draweropened WHERE TICKETID = 'No Sale' AND DATE(OPENDATE) = ?";
                 }
 
-                pstmt = con.prepareStatement(SQL);
-                pstmt.setString(1, m_PaymentsClosed.printDateStart());
-                rs = pstmt.executeQuery();
-                while (rs.next()){
-                    result ++;           
+                try (PreparedStatement pstmt = con.prepareStatement(SQL)) {
+                    pstmt.setTimestamp(1, dateStart);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        while (rs.next()){
+                            result++;
+                        }
+                    }
                 }
-            
-                rs=null;
+
                 dresult=0;
                 if ("PostgreSQL".equals(sdbmanager)) {
                     SQL = "SELECT * FROM lineremoved WHERE TICKETID = 'Void' AND REMOVEDDATE > ?";
@@ -236,17 +237,18 @@ public class JPanelCloseMoneyReprint extends JPanel implements JPanelView, BeanF
                     SQL = "SELECT * FROM lineremoved WHERE TICKETID = 'Void' AND DATE(REMOVEDDATE) = ?";
                 }
 
-                pstmt = con.prepareStatement(SQL);
-                pstmt.setString(1, m_PaymentsClosed.printDateStart());
-                rs = pstmt.executeQuery();
-                while (rs.next()){
-                    dresult ++;           
+                try (PreparedStatement pstmt = con.prepareStatement(SQL)) {
+                    pstmt.setTimestamp(1, dateStart);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        while (rs.next()){
+                            dresult++;
+                        }
+                    }
                 }
-                rs=null;
                 con=null;
-                s=null;                
+                s=null;
             }
-       
+
             catch (SQLException e){}         
 
             m_jLinesRemoved.setText(dresult.toString());
