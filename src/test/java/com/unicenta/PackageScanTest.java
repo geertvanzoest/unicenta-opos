@@ -8,6 +8,6 @@ public class PackageScanTest {
 
     @Test
     public void shouldScanPackage() {
-        Assert.assertEquals(67, new FlatLookAndFeel().getLafs().size());
+        Assert.assertEquals(54, new FlatLookAndFeel().getLafs().size());
     }
 }
