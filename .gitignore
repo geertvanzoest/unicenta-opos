@@ -44,6 +44,5 @@ replay_pid*
 
 # Logs
 *.log
-docs/reference/
-docs/superpowers/
+docs/
 unicenta-docker/
