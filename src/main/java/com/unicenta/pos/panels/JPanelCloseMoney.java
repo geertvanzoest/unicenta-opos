@@ -41,7 +41,9 @@ import java.awt.*;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -67,12 +69,10 @@ public class JPanelCloseMoney extends JPanel implements JPanelView, BeanFactoryA
     private final DateFormat df= new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");   
     
     private Session s;
-    private Connection con;  
+    private Connection con;
     private Statement stmt;
     private Integer result;
     private Integer dresult;
-    private String SQL;
-    private ResultSet rs;
     
     private AppUser m_User;
     
@@ -235,45 +235,42 @@ public class JPanelCloseMoney extends JPanel implements JPanelView, BeanFactoryA
        try{
             result=0;
             s=m_App.getSession();
-            con=s.getConnection();  
-            String sdbmanager = m_dlSystem.getDBVersion();           
+            con=s.getConnection();
+            String sdbmanager = m_dlSystem.getDBVersion();
+            String SQL;
 
             if ("PostgreSQL".equals(sdbmanager) || "SQLite".equals(sdbmanager)) {
-                SQL = "SELECT * " +
-                        "FROM draweropened " +
-                        "WHERE TICKETID = 'No Sale' AND OPENDATE > " + "'" + m_PaymentsToClose.printDateStart() + "'";
+                SQL = "SELECT * FROM draweropened WHERE TICKETID = 'No Sale' AND OPENDATE > ?";
             } else {
-                SQL = "SELECT * " +
-                        "FROM draweropened " +
-                        "WHERE TICKETID = 'No Sale' AND OPENDATE > {fn TIMESTAMP('" + m_PaymentsToClose.getDateStartDerby() + "')}";
+                SQL = "SELECT * FROM draweropened WHERE TICKETID = 'No Sale' AND OPENDATE > ?";
             }
 
-            stmt = (Statement) con.createStatement();      
-            rs = stmt.executeQuery(SQL);
-            while (rs.next()){
-                result ++;           
+            try (PreparedStatement pstmt = con.prepareStatement(SQL)) {
+                pstmt.setTimestamp(1, new Timestamp(m_PaymentsToClose.getDateStart().getTime()));
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()){
+                        result++;
+                    }
+                }
             }
-                rs=null;
 
-// Get Ticket DELETES & Line Voids            
+// Get Ticket DELETES & Line Voids
             dresult=0;
             if ("PostgreSQL".equals(sdbmanager) || "SQLite".equals(sdbmanager)) {
-                SQL = "SELECT * " +
-                        "FROM lineremoved " +
-                        "WHERE REMOVEDDATE > " + "'" + m_PaymentsToClose.printDateStart() + "'";                        
+                SQL = "SELECT * FROM lineremoved WHERE REMOVEDDATE > ?";
             } else {
-                SQL = "SELECT * " +
-                        "FROM lineremoved " +
-                        "WHERE REMOVEDDATE > {fn TIMESTAMP('" + m_PaymentsToClose.getDateStartDerby() + "')}";                        
+                SQL = "SELECT * FROM lineremoved WHERE REMOVEDDATE > ?";
             }
             log.debug("close-cash sql -> {}",SQL);
 
-            stmt = (Statement) con.createStatement();      
-            rs = stmt.executeQuery(SQL);
-            while (rs.next()){
-                dresult ++;           
+            try (PreparedStatement pstmt = con.prepareStatement(SQL)) {
+                pstmt.setTimestamp(1, new Timestamp(m_PaymentsToClose.getDateStart().getTime()));
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()){
+                        dresult++;
+                    }
+                }
             }
-                rs=null;
                 con=null;
                 s=null;                
             }  
