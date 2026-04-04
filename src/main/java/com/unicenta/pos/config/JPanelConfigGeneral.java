@@ -20,7 +20,6 @@ package com.unicenta.pos.config;
 
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneLightContrastIJTheme;
 import com.unicenta.data.user.DirtyManager;
 import com.unicenta.pos.forms.AppConfig;
 import com.unicenta.pos.forms.AppLocal;
