@@ -26,6 +26,10 @@ nb-configuration.xml
 .nb-gradle/
 .vscode/
 
+# Claude Code
+.claude/
+.planning/
+
 # OS
 .DS_Store
 Thumbs.db
