@@ -282,7 +282,7 @@
     <dependency>
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf</artifactId>
-      <version>1.6.5</version>
+      <version>3.7.1</version>
     </dependency>
     <!-- Flat Look and Feel addon for SwingX -->
     <dependency>
