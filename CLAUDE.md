@@ -48,7 +48,7 @@ open target/site/jacoco/index.html # Coverage rapport (na mvn test)
 
 ## CI/CD
 
-- GitHub Actions: `ci.yml` (build + test + Codecov), `semgrep.yml` (SAST)
+- GitHub Actions: `ci.yml` (build + test + Codecov). SAST via CodeQL (code-scanning default setup, wekelijks); Semgrep is uitgefaseerd (#60)
 - Branch protection op `main` — altijd via PR
 - CodeRabbit automatische code review op PRs
 
